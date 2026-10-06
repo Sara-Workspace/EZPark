@@ -1,0 +1,6 @@
+*.sql
+*.mdf
+*.ldf
+bin/
+obj/
+.vs/
