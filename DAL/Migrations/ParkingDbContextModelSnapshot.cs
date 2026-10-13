@@ -22,6 +22,48 @@ namespace DAL.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("DAL.Driver", b =>
+                {
+                    b.Property<int>("DriverID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DriverID"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("CreditBalance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PaymentMethodID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("DriverID");
+
+                    b.ToTable("Drivers");
+                });
+
             modelBuilder.Entity("DAL.DynamicPricingRules", b =>
                 {
                     b.Property<int>("Id")
@@ -33,13 +75,13 @@ namespace DAL.Migrations
                     b.Property<DateTime>("EndtHour")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal>("EvExtraCharg")
+                    b.Property<decimal>("EvExtraCharge")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ParkingSpotSpotId")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("PriceMulyiPlier")
+                    b.Property<decimal>("PriceMultiplier")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("SpotID")
@@ -55,6 +97,46 @@ namespace DAL.Migrations
                     b.ToTable("DynamicPricingRules");
                 });
 
+            modelBuilder.Entity("DAL.Owners", b =>
+                {
+                    b.Property<int>("OwnerID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OwnerID"));
+
+                    b.Property<string>("BankDetails")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("OwnerID");
+
+                    b.ToTable("Owners");
+                });
+
             modelBuilder.Entity("DAL.ParkingSpots", b =>
                 {
                     b.Property<int>("SpotId")
@@ -63,7 +145,7 @@ namespace DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SpotId"));
 
-                    b.Property<string>("Adress")
+                    b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -74,7 +156,7 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("EvChrger")
+                    b.Property<bool>("EvCharger")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsActive")
@@ -83,13 +165,15 @@ namespace DAL.Migrations
                     b.Property<double>("Latitude")
                         .HasColumnType("float");
 
-                    b.Property<double>("Londitude")
+                    b.Property<double>("Longitude")
                         .HasColumnType("float");
 
                     b.Property<int>("OwnerId")
                         .HasColumnType("int");
 
                     b.HasKey("SpotId");
+
+                    b.HasIndex("OwnerId");
 
                     b.ToTable("ParkingSpots");
                 });
@@ -115,15 +199,17 @@ namespace DAL.Migrations
                     b.Property<int>("ReservationID")
                         .HasColumnType("int");
 
-                    b.Property<bool>("Status")
-                        .HasColumnType("bit");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TransactionID")
                         .HasColumnType("int");
 
                     b.HasKey("PaymentID");
 
-                    b.HasIndex("ReservationID");
+                    b.HasIndex("ReservationID")
+                        .IsUnique();
 
                     b.ToTable("Payment");
                 });
@@ -166,6 +252,8 @@ namespace DAL.Migrations
 
                     b.HasKey("ReservationID");
 
+                    b.HasIndex("DriverID");
+
                     b.HasIndex("ParkingSpotSpotId");
 
                     b.ToTable("Reservations");
@@ -173,11 +261,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Reviews", b =>
                 {
-                    b.Property<int>("ReviewsID")
+                    b.Property<int>("ReviewId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewsID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewId"));
 
                     b.Property<string>("Comment")
                         .IsRequired()
@@ -186,7 +274,7 @@ namespace DAL.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DriverID")
+                    b.Property<int>("DriverId")
                         .HasColumnType("int");
 
                     b.Property<int>("OwnerId")
@@ -195,10 +283,16 @@ namespace DAL.Migrations
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
-                    b.Property<int>("ReservationID")
+                    b.Property<int>("ReservationId")
                         .HasColumnType("int");
 
-                    b.HasKey("ReviewsID");
+                    b.HasKey("ReviewId");
+
+                    b.HasIndex("DriverId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("ReservationId");
 
                     b.ToTable("Reviews");
                 });
@@ -217,6 +311,9 @@ namespace DAL.Migrations
                     b.Property<bool>("IsBooked")
                         .HasColumnType("bit");
 
+                    b.Property<int>("ParkingSpotSpotId")
+                        .HasColumnType("int");
+
                     b.Property<int>("SpotId")
                         .HasColumnType("int");
 
@@ -224,6 +321,8 @@ namespace DAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("AvailabilityId");
+
+                    b.HasIndex("ParkingSpotSpotId");
 
                     b.ToTable("SpotAvailability");
                 });
@@ -239,11 +338,22 @@ namespace DAL.Migrations
                     b.Navigation("ParkingSpot");
                 });
 
+            modelBuilder.Entity("DAL.ParkingSpots", b =>
+                {
+                    b.HasOne("DAL.Owners", "Owner")
+                        .WithMany("ParkingSpots")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
             modelBuilder.Entity("DAL.Payment", b =>
                 {
                     b.HasOne("DAL.Reservations", "Reservation")
-                        .WithMany()
-                        .HasForeignKey("ReservationID")
+                        .WithOne("Payment")
+                        .HasForeignKey("DAL.Payment", "ReservationID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -251,6 +361,52 @@ namespace DAL.Migrations
                 });
 
             modelBuilder.Entity("DAL.Reservations", b =>
+                {
+                    b.HasOne("DAL.Driver", "Driver")
+                        .WithMany("Reservations")
+                        .HasForeignKey("DriverID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DAL.ParkingSpots", "ParkingSpot")
+                        .WithMany()
+                        .HasForeignKey("ParkingSpotSpotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Driver");
+
+                    b.Navigation("ParkingSpot");
+                });
+
+            modelBuilder.Entity("DAL.Reviews", b =>
+                {
+                    b.HasOne("DAL.Driver", "Driver")
+                        .WithMany("Reviews")
+                        .HasForeignKey("DriverId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DAL.Owners", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DAL.Reservations", "Reservation")
+                        .WithMany()
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Driver");
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("Reservation");
+                });
+
+            modelBuilder.Entity("DAL.SpotAvailability", b =>
                 {
                     b.HasOne("DAL.ParkingSpots", "ParkingSpot")
                         .WithMany()
@@ -261,9 +417,27 @@ namespace DAL.Migrations
                     b.Navigation("ParkingSpot");
                 });
 
+            modelBuilder.Entity("DAL.Driver", b =>
+                {
+                    b.Navigation("Reservations");
+
+                    b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("DAL.Owners", b =>
+                {
+                    b.Navigation("ParkingSpots");
+                });
+
             modelBuilder.Entity("DAL.ParkingSpots", b =>
                 {
                     b.Navigation("DynamicPricingRules");
+                });
+
+            modelBuilder.Entity("DAL.Reservations", b =>
+                {
+                    b.Navigation("Payment")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

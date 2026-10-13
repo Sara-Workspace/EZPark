@@ -12,5 +12,10 @@ namespace DAL
         public DateTime StartTime { get; set; } // תאריך התחלה פנוי
         public DateTime EndTime { get; set; } // תאריך סוף פנוי
         public bool IsBooked { get; set; } // האם חלון הזמן הזה כבר הוזמן בפועל?
+
+        // ----- Navigation Property (קשר גומלין) -----
+
+       
+        public ParkingSpots ParkingSpot { get; set; } = null!; // קישור ישיר למחלקת החניה שאליה שייך חלון הזמינות הזה
     }
 }
