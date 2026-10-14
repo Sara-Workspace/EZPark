@@ -1,22 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTO;                                      // ReviewDTO
+﻿using DTO;                                                  // כדי להכיר את מחלקות ה-DTO
 
-
-namespace BLL.Repositories
+namespace BLL.Repositories                                  // הקובץ נמצא בתיקייה Repositories שב-BLL
 {
-    public interface IReviewsRepository
+    public interface IReviewsRepository                     // ממשק: רשימת הפעולות על ביקורות
     {
-        List<ReviewDTO> GetAllReviews();                        // כל הביקורות
-        ReviewDTO? GetReviewById(int id);                       // ביקורת לפי קוד, או null
-        ReviewDTO CreateReview(ReviewDTO dto);                  // הוספת ביקורת
-        ReviewDTO? UpdateReview(int id, ReviewDTO dto);         // עדכון ביקורת
-        bool DeleteReview(int id);                              // מחיקת ביקורת
+        List<ReviewDTO> GetAllReviews();                    // מחזיר את כל הביקורות
+        ReviewDTO? GetReviewById(int id);                   // מחזיר ביקורת לפי קוד (null אם לא נמצאה)
+        ReviewDTO CreateReview(ReviewCreateDTO dto);        // מוסיף ביקורת חדשה ומחזיר אותה
+        ReviewDTO? UpdateReview(int id, ReviewDTO dto);     // מעדכן ביקורת (null אם לא נמצאה)
+        bool DeleteReview(int id);                          // מוחק ביקורת (true אם הצליח)
 
-        List<ReviewDTO> GetReviewsBySpotId(int spotId);         // ספציפית: ביקורות על חניה מסוימת
-        double GetAverageRatingBySpotId(int spotId);            // ספציפית: ממוצע הדירוגים של חניה
+        List<ReviewDTO> GetReviewsBySpotId(int spotId);     // נוסף: הביקורות על חניה מסוימת
+        double GetAverageRatingBySpotId(int spotId);        // נוסף: ממוצע הדירוגים של חניה
     }
 }

@@ -1,20 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTO;                                      // כדי להשתמש ב-OwnerDTO
+﻿using DTO;                                              // כדי להכיר את מחלקות ה-DTO
 
-namespace BLL.Repositories
+namespace BLL.Repositories                              // הקובץ נמצא בתיקייה Repositories שב-BLL
 {
-    public interface IOwnersRepository
+    public interface IOwnersRepository                  // ממשק: רשימת הפעולות על בעלי חניות
     {
-        List<OwnerDTO> GetAllOwners();                      // כל הבעלים
-        OwnerDTO? GetOwnerById(int id);                     // בעלים לפי קוד, או null
-        OwnerDTO CreateOwner(OwnerDTO dto);                 // הוספת בעלים חדש
-        OwnerDTO? UpdateOwner(int id, OwnerDTO dto);        // עדכון בעלים, או null אם לא קיים
-        bool DeleteOwner(int id);                           // מחיקת בעלים
+        List<OwnerDTO> GetAllOwners();                  // מחזיר את כל הבעלים
+        OwnerDTO? GetOwnerById(int id);                 // מחזיר בעלים לפי קוד (null אם לא נמצא)
+        OwnerDTO CreateOwner(OwnerCreateDTO dto);       // מוסיף בעלים חדש ומחזיר אותו
+        OwnerDTO? UpdateOwner(int id, OwnerUpdateDTO dto); // מעדכן בעלים (null אם לא נמצא)
+        bool DeleteOwner(int id);                       // מוחק בעלים (true אם הצליח)
 
-        OwnerDTO? GetOwnerByEmail(string email);            // ספציפית: בעלים לפי מייל
+        OwnerDTO? GetOwnerByEmail(string email);        // נוסף: מחפש בעלים לפי מייל (להתחברות)
+        OwnerWithSpotsDTO? GetOwnerWithSpots(int id);   // נוסף: בעלים + רשימת החניות שלו
     }
 }

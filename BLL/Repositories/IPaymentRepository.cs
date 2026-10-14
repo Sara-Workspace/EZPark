@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTO;                                      // PaymentDTO
+﻿using DTO;                                                      // כדי להכיר את מחלקות ה-DTO
 
-
-namespace BLL.Repositories
+namespace BLL.Repositories                                      // הקובץ נמצא בתיקייה Repositories שב-BLL
 {
-    public interface IPaymentRepository
+    public interface IPaymentRepository                         // ממשק: רשימת הפעולות על תשלומים
     {
-        List<PaymentDTO> GetAllPayments();                      // כל התשלומים
-        PaymentDTO? GetPaymentById(int id);                     // תשלום לפי קוד, או null
-        PaymentDTO CreatePayment(PaymentDTO dto);               // תיעוד תשלום חדש
-        PaymentDTO? UpdatePayment(int id, PaymentDTO dto);      // עדכון תשלום
-        bool DeletePayment(int id);                             // מחיקת תשלום
+        List<PaymentDTO> GetAllPayments();                      // מחזיר את כל התשלומים
+        PaymentDTO? GetPaymentById(int id);                     // מחזיר תשלום לפי קוד (null אם לא נמצא)
+        PaymentDTO CreatePayment(PaymentCreateDTO dto);         // מוסיף תשלום חדש ומחזיר אותו
+        PaymentDTO? UpdatePayment(int id, PaymentDTO dto);      // מעדכן תשלום (null אם לא נמצא)
+        bool DeletePayment(int id);                             // מוחק תשלום (true אם הצליח)
 
-        List<PaymentDTO> GetPaymentsByReservationId(int reservationId); // ספציפית: התשלומים של הזמנה מסוימת
+        List<PaymentDTO> GetPaymentsByReservationId(int reservationId); // נוסף: התשלומים של הזמנה מסוימת
     }
 }

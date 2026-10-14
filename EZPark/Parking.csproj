@@ -1,24 +1,45 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
+	<!-- פרויקט Web: האתר וה-API -->
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>97238dc3-071f-4f18-8276-31b75b5dc1c8</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-  </PropertyGroup>
+	<PropertyGroup>
+		<!-- התחלת ההגדרות הכלליות -->
+		<TargetFramework>net9.0</TargetFramework>
+		<!-- רץ על .NET 9 -->
+		<Nullable>enable</Nullable>
+		<!-- מאפשר סימון ? למשתנה שיכול להיות null -->
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- usings בסיסיים נוספים אוטומטית -->
+		<UserSecretsId>97238dc3-071f-4f18-8276-31b75b5dc1c8</UserSecretsId>
+		<!-- מזהה לשמירת סודות (נוצר אוטומטית) -->
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<!-- הגדרת Docker (נוצר אוטומטית) -->
+	</PropertyGroup>
+	<!-- סוף ההגדרות הכלליות -->
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<!-- רשימת ספריות חיצוניות -->
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
+		<!-- תיעוד ה-API -->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+			<!-- כלים למיגרציות -->
+			<PrivateAssets>all</PrivateAssets>
+			<!-- הכלי לא עובר לפרויקטים אחרים -->
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<!-- אילו חלקים מהכלי לכלול -->
+		</PackageReference>
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+		<!-- תמיכה ב-Docker -->
+	</ItemGroup>
+	<!-- סוף רשימת הספריות -->
 
-  <ItemGroup>
-    <ProjectReference Include="..\DAL\DAL.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<!-- רשימת פרויקטים שהאתר משתמש בהם -->
+		<ProjectReference Include="..\DAL\DAL.csproj" />
+		<!-- חיבור ל-DAL: בשביל ה-DbContext -->
+		<ProjectReference Include="..\BLL\BLL.csproj" />
+		<!-- חדש: חיבור ל-BLL, בשביל ה-Repositories וה-Mapper -->
+	</ItemGroup>
+	<!-- סוף רשימת הפרויקטים -->
 
 </Project>
+<!-- סוף הגדרות הפרויקט -->

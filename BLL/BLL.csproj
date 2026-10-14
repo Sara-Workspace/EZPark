@@ -1,14 +1,32 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<!-- התחלת הגדרות הפרויקט: פרויקט רגיל של .NET -->
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<!-- התחלת ההגדרות הכלליות -->
+		<TargetFramework>net9.0</TargetFramework>
+		<!-- הפרויקט רץ על .NET 9 -->
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- usings בסיסיים נוספים אוטומטית (List, DateTime...) -->
+		<Nullable>enable</Nullable>
+		<!-- מאפשר סימון ? למשתנה שיכול להיות null -->
+	</PropertyGroup>
+	<!-- סוף ההגדרות הכלליות -->
 
-  <ItemGroup>
-    <ProjectReference Include="..\DAL\DAL.csproj" />
-    <ProjectReference Include="..\DTO\DTO.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<!-- רשימת ספריות חיצוניות -->
+		<PackageReference Include="AutoMapper" Version="14.0.0" />
+		<!-- ספריית ההמרות בין טבלה ל-DTO -->
+	</ItemGroup>
+	<!-- סוף רשימת הספריות -->
+
+	<ItemGroup>
+		<!-- רשימת פרויקטים ש-BLL משתמש בהם -->
+		<ProjectReference Include="..\DAL\DAL.csproj" />
+		<!-- חיבור ל-DAL: מכיר את הטבלאות -->
+		<ProjectReference Include="..\DTO\DTO.csproj" />
+		<!-- חיבור ל-DTO: מכיר את מחלקות ה-DTO -->
+	</ItemGroup>
+	<!-- סוף רשימת הפרויקטים -->
 
 </Project>
+<!-- סוף הגדרות הפרויקט -->

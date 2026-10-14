@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTO;                                      // SpotAvailabilityDTO
+﻿using DTO;                                                              // כדי להכיר את מחלקות ה-DTO
 
-
-namespace BLL.Repositories
+namespace BLL.Repositories                                              // הקובץ נמצא בתיקייה Repositories שב-BLL
 {
-    public interface ISpotAvailabilityRepository
+    public interface ISpotAvailabilityRepository                        // ממשק: רשימת הפעולות על זמינות חניות
     {
-        List<SpotAvailabilityDTO> GetAllSpotAvailabilities();                           // כל רשומות הזמינות
-        SpotAvailabilityDTO? GetSpotAvailabilityById(int id);                           // רשומה לפי קוד, או null
-        SpotAvailabilityDTO CreateSpotAvailability(SpotAvailabilityDTO dto);            // הוספת זמינות
-        SpotAvailabilityDTO? UpdateSpotAvailability(int id, SpotAvailabilityDTO dto);   // עדכון זמינות
-        bool DeleteSpotAvailability(int id);                                            // מחיקת זמינות
+        List<SpotAvailabilityDTO> GetAllSpotAvailabilities();           // מחזיר את כל רשומות הזמינות
+        SpotAvailabilityDTO? GetSpotAvailabilityById(int id);           // מחזיר רשומה לפי קוד (null אם לא נמצאה)
+        SpotAvailabilityDTO CreateSpotAvailability(SpotAvailabilityCreateDTO dto); // מוסיף זמינות חדשה ומחזיר אותה
+        SpotAvailabilityDTO? UpdateSpotAvailability(int id, SpotAvailabilityDTO dto); // מעדכן זמינות (null אם לא נמצאה)
+        bool DeleteSpotAvailability(int id);                            // מוחק זמינות (true אם הצליח)
 
-        List<SpotAvailabilityDTO> GetAvailabilityBySpotId(int spotId);                  // ספציפית: הזמינות של חניה מסוימת
+        List<SpotAvailabilityDTO> GetAvailabilityBySpotId(int spotId);  // נוסף: הזמינות של חניה מסוימת
     }
 }
