@@ -6,7 +6,16 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    internal class OwnerWithSpotsDTO
+    public class OwnerWithSpotsDTO
     {
+        public int OwnerID { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string BankDetails { get; set; } = string.Empty;
+
+        // מעבר ל-100%: אוסף של כל החניות השייכות לבעלים זה
+        public List<ParkingSpotDTO> MyParkingSpots { get; set; } = new List<ParkingSpotDTO>();
     }
 }

@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    internal class SpotAvailabilityCreateDTO
+    public class SpotAvailabilityCreateDTO
     {
+        public int SpotID { get; set; }
+        public DayOfWeek DayOfWeek { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
     }
 }

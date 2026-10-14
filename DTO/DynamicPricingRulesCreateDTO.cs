@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    internal class DynamicPricingRulesCreateDTO
+    public class DynamicPricingRulesCreateDTO
     {
+        public int SpotID { get; set; }
+        public decimal PriceMultiplier { get; set; }
+        public decimal EvExtraCharge { get; set; }
+        public DateTime EffectiveFrom { get; set; }
+        public DateTime EffectiveTo { get; set; }
     }
 }
