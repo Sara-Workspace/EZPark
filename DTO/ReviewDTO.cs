@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    internal class ReviewDTO
+    public class ReviewDTO
     {
+        public int ReviewID { get; set; }
+        public int ReservationID { get; set; }
+        public int Rating { get; set; }
+        public string Comment { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
     }
 }

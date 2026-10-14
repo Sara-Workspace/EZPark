@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace DTO
 {
-    internal class OwnerUpdateDTO
+    public class OwnerUpdateDTO
     {
+        public int OwnerID { get; set; } // נדרש כדי לדעת איזה בעל חניה לעדכן
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string BankDetails { get; set; } = string.Empty;
     }
 }
