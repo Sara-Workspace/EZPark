@@ -18,6 +18,16 @@ namespace DAL
         public DateTime CreatedAt { get; set; } // תאריך יצירת הזמנה
 
         // Navigation Property
-        public ParkingSpots ParkingSpot { get; set; } = null!;
+
+     
+        public ParkingSpots ParkingSpot { get; set; } = null!;// קישור חזרה לחניה שהוזמנה
+
+
+        public Driver Driver { get; set; } = null!; // קישור חזרה לנהג/שוכר שביצע את ההזמנה
+
+
+        public Payment Payment { get; set; } // קישור לתשלום המשויך להזמנה זו (קשר של אחד לאחד או אחד להרבה)
+   
     }
+
 }
