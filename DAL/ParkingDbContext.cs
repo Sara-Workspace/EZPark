@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL
 {
-    //המחלקה DbContext -שמנהלת את מסד הנתונים בקוד
+    //ParkingDb-זה גשר בין הקוד למסד נתונים
     //הטיפוס DbSet<T> -שמייצג טבלה במסד הנתונים
     public class ParkingDbContext: DbContext
     {
