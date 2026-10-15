@@ -37,6 +37,7 @@
 		<ProjectReference Include="..\DAL\DAL.csproj" />
 		<!-- חיבור ל-DAL: בשביל ה-DbContext -->
 		<ProjectReference Include="..\BLL\BLL.csproj" />
+		<ProjectReference Include="..\DTO\DTO.csproj" />
 		<!-- חדש: חיבור ל-BLL, בשביל ה-Repositories וה-Mapper -->
 	</ItemGroup>
 	<!-- סוף רשימת הפרויקטים -->
