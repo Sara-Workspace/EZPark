@@ -14,12 +14,16 @@ namespace DAL.Repositories
 
         public List<Reviews> GetAllReviews()
         {
-            return _context.Reviews.ToList();
+            return _context.Reviews
+                            .Include(r => r.Reservation)
+                            .ToList();
         }
 
         public Reviews? GetReviewById(int id)
         {
-            return _context.Reviews.Find(id);
+            return _context.Reviews
+                            .Include(r => r.Reservation)
+                            .FirstOrDefault(r => r.ReviewId == id);
         }
 
         public void AddReview(Reviews review)

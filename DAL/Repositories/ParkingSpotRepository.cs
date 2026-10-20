@@ -14,12 +14,16 @@ namespace DAL.Repositories
 
         public List<ParkingSpots> GetAllParkingSpots()
         {
-            return _context.ParkingSpots.ToList();
+            return _context.ParkingSpots
+                 .Include(p => p.Owner)
+                 .ToList();
         }
 
         public ParkingSpots? GetParkingSpotById(int id)
         {
-            return _context.ParkingSpots.Find(id);
+            return _context.ParkingSpots
+                 .Include(p => p.Owner)
+                 .FirstOrDefault(p => p.SpotId == id);
         }
 
         public void AddParkingSpot(ParkingSpots spot)
@@ -43,13 +47,15 @@ namespace DAL.Repositories
         public List<ParkingSpots> GetParkingSpotsByOwnerId(int ownerId)
         {
             return _context.ParkingSpots
-                .Where(p => p.OwnerId == ownerId)
-                .ToList();
+                 .Include(p => p.Owner)
+                 .Where(p => p.OwnerId == ownerId)
+                 .ToList();
         }
 
         public List<ParkingSpots> GetParkingSpotsByCity(string city)
         {
             return _context.ParkingSpots
+                .Include(p => p.Owner)
                 .Where(p => p.City == city)
                 .ToList();
         }

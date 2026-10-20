@@ -1,4 +1,5 @@
 ﻿using DAL;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repositories
 {
@@ -13,12 +14,16 @@ namespace DAL.Repositories
 
         public List<Payment> GetAllPayments()
         {
-            return _context.Payment.ToList();
+            return _context.Payment
+                            .Include(p => p.Reservation)
+                            .ToList();
         }
 
         public Payment? GetPaymentById(int id)
         {
-            return _context.Payment.Find(id);
+            return _context.Payment
+                            .Include(p => p.Reservation)
+                            .FirstOrDefault(p => p.PaymentID == id);
         }
 
         public void AddPayment(Payment payment)
@@ -42,6 +47,7 @@ namespace DAL.Repositories
         public List<Payment> GetPaymentsByReservationId(int reservationId)
         {
             return _context.Payment
+                .Include(p => p.Reservation)
                 .Where(p => p.ReservationID == reservationId)
                 .ToList();
         }

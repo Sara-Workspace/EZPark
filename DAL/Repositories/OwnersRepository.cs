@@ -14,12 +14,16 @@ namespace DAL.Repositories
 
         public List<Owners> GetAllOwners()
         {
-            return _context.Owners.ToList();
+            return _context.Owners
+                .Include(o=>o.ParkingSpots)
+                .ToList();
         }
 
         public Owners? GetOwnerById(int id)
         {
-            return _context.Owners.Find(id);
+            return _context.Owners
+                .Include(o => o.ParkingSpots)
+                .FirstOrDefault(o => o.OwnerID == id);
         }
 
         public void AddOwner(Owners owner)
@@ -42,7 +46,9 @@ namespace DAL.Repositories
 
         public Owners? GetOwnerByEmail(string email)
         {
-            return _context.Owners.FirstOrDefault(o => o.Email == email);
+            return _context.Owners
+                .Include(o => o.ParkingSpots)
+                .FirstOrDefault(o => o.Email == email);
         }
 
         public Owners? GetOwnerWithSpots(int id)

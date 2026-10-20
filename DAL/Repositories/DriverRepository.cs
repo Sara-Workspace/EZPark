@@ -9,12 +9,16 @@ namespace DAL.Repositories
 
         public DriverRepository(ParkingDbContext context)
         {
+
             _context = context;
         }
 
         public List<Driver> GetAllDrivers()
         {
-            return _context.Drivers.ToList();
+
+            return _context.Drivers
+                .Include(d => d.Reservations)
+                .ToList();
         }
 
         public Driver? GetDriverById(int id)
@@ -42,7 +46,9 @@ namespace DAL.Repositories
 
         public Driver? GetDriverByEmail(string email)
         {
-            return _context.Drivers.FirstOrDefault(d => d.Email == email);
+            return _context.Drivers
+                .Include(d => d.Reservations)
+                .FirstOrDefault(d => d.Email == email);
         }
     }
 }

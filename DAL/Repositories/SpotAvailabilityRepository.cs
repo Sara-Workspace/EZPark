@@ -1,4 +1,5 @@
 ﻿using DAL;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repositories
 {
@@ -13,12 +14,16 @@ namespace DAL.Repositories
 
         public List<SpotAvailability> GetAllSpotAvailabilities()
         {
-            return _context.SpotAvailability.ToList();
+            return _context.SpotAvailability
+                            .Include(a => a.ParkingSpot)
+                            .ToList();
         }
 
         public SpotAvailability? GetSpotAvailabilityById(int id)
         {
-            return _context.SpotAvailability.Find(id);
+            return _context.SpotAvailability
+                            .Include(a => a.ParkingSpot)
+                            .FirstOrDefault(a => a.AvailabilityId == id);
         }
 
         public void AddSpotAvailability(SpotAvailability availability)
@@ -42,6 +47,7 @@ namespace DAL.Repositories
         public List<SpotAvailability> GetAvailabilityBySpotId(int spotId)
         {
             return _context.SpotAvailability
+                .Include(a => a.ParkingSpot)
                 .Where(a => a.SpotId == spotId)
                 .OrderBy(a => a.StartTime)
                 .ToList();

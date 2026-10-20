@@ -1,4 +1,5 @@
 ﻿using DAL;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repositories
 {
@@ -13,12 +14,16 @@ namespace DAL.Repositories
 
         public List<DynamicPricingRules> GetAllDynamicPricingRules()
         {
-            return _context.DynamicPricingRules.ToList();
+            return _context.DynamicPricingRules
+                            .Include(r => r.ParkingSpot)
+                            .ToList();
         }
 
         public DynamicPricingRules? GetDynamicPricingRuleById(int id)
         {
-            return _context.DynamicPricingRules.Find(id);
+            return _context.DynamicPricingRules
+                 .Include(r => r.ParkingSpot)
+                 .FirstOrDefault(r => r.SpotID == id || r.Id == id);
         }
 
         public void AddDynamicPricingRule(DynamicPricingRules rule)
@@ -42,8 +47,9 @@ namespace DAL.Repositories
         public List<DynamicPricingRules> GetRulesBySpotId(int spotId)
         {
             return _context.DynamicPricingRules
-                .Where(r => r.SpotID == spotId)
-                .ToList();
+                 .Include(r => r.ParkingSpot)
+                 .Where(r => r.SpotID == spotId)
+                 .ToList();
         }
     }
 }
