@@ -1,3 +1,5 @@
+//זה החלק שהעולם החיצון מדבר איתו
+
 using BLL;
 using BLL.Services;
 using DAL;
