@@ -14,10 +14,20 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-//מאפשר גישה לפרויקט כשצריך לפנות למסד הנתונים
-// רישום ה-DbContext
+// קריאת מחרוזת החיבור למסד הנתונים
+// הערך לא כתוב בקוד, הוא נשמר במשתנה סביבה בשם ConnectionStrings__DefaultConnection
+// ASP.NET Core מתרגם את הקו התחתון הכפול __ לנקודתיים, ולכן הוא נקרא כאן בשם DefaultConnection
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// בדיקה: אם משתנה הסביבה לא הוגדר במחשב (או שהערך ריק)
+// האפליקציה נעצרת מיד עם הודעה ברורה, במקום להיכשל אחר כך בשגיאה לא מובנת מול מסד הנתונים
+if (string.IsNullOrWhiteSpace(connStr))
+    throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is missing. Set it as an environment variable.");
+
+// רישום ה-DbContext עם מחרוזת החיבור שקראנו ממשתנה הסביבה
 builder.Services.AddDbContext<ParkingDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connStr));
 
 
 // רישום AutoMapper - טוען את ההוראות מ-MappingProfile
