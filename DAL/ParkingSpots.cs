@@ -15,10 +15,11 @@ namespace DAL
         public bool EvCharger { get; set; } // האם יש עמדת הטענה חשמלית?
         public decimal BasePricePerHour { get; set; } // מחיר בסיס לשעה
         public bool IsActive { get; set; } // פעיל?
+        public string? Image { get; set; } // שם קובץ התמונה בלבד
 
         // Navigation Property
 
-        
+
         public Owners Owner { get; set; } = null!;// קישור חזרה למשכיר (הבעלים של החניה)
         public ICollection<DynamicPricingRules> DynamicPricingRules { get; set; } = new List<DynamicPricingRules>();
     }

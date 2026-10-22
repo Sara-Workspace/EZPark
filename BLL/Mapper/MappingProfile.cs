@@ -2,6 +2,11 @@
 using DAL;          // מחלקות הטבלאות
 using DTO;          // מחלקות ה-DTO
 
+// MappingProfile - "דף ההוראות" של AutoMapper
+// מגדיר איך להמיר נתונים בין הטבלאות (DAL) לבין ה-DTO-ים, בשני הכיוונים
+// שדות עם אותו שם מועתקים אוטומטית, ו-Ignore מסמן שדה שלא מעתיקים
+// (כי ממלאים אותו בקוד, כמו Image, או כי אסור לשנות אותו, כמו SpotId)
+
 namespace BLL       // שייך לשכבת BLL
 {
     public class MappingProfile : Profile   // דף הוראות ל-AutoMapper
@@ -21,10 +26,14 @@ namespace BLL       // שייך לשכבת BLL
 
             // ===== חניות =====
             CreateMap<ParkingSpots, ParkingSpotDTO>();          // חניה -> DTO
-            CreateMap<ParkingSpotCreateDTO, ParkingSpots>();    // חניה חדשה -> טבלה
+            CreateMap<ParkingSpotCreateDTO, ParkingSpots>()     // חניה חדשה -> טבלה
+                .ForMember(dest => dest.Image,                  // שם התמונה
+                           opt => opt.Ignore());                // לא למלא כאן (ממולא ב-Service אחרי שמירת הקובץ)
             CreateMap<ParkingSpotDTO, ParkingSpots>()           // עדכון חניה -> טבלה
                 .ForMember(dest => dest.SpotId,                 // השדה SpotId
-                           opt => opt.Ignore());                // לא לשנות אותו
+                           opt => opt.Ignore())                 // לא לשנות אותו
+                .ForMember(dest => dest.Image,                  // שם התמונה
+                           opt => opt.Ignore());                // עדכון פרטים לא דורס את התמונה
             CreateMap<ParkingSpots, ParkingSpotDetailedDTO>();  // חניה + פרטי הבעלים
             CreateMap<ParkingSpots, ParkingSpotWithReviewsDTO>()    // חניה + ביקורות
                 .ForMember(dest => dest.Reviews,                // רשימת הביקורות

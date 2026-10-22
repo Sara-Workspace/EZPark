@@ -17,5 +17,6 @@ namespace DTO
         public bool EvCharger { get; set; }
         public decimal BasePricePerHour { get; set; }
         public bool IsActive { get; set; }
+        public string? Image { get; set; } // שם הקובץ
     }
 }

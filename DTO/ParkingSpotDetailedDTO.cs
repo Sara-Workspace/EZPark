@@ -13,8 +13,9 @@ namespace DTO
         public string City { get; set; } = string.Empty;
         public decimal BasePricePerHour { get; set; }
         public bool EvCharger { get; set; }
+        public string? Image { get; set; } // שם הקובץ
 
-        
+
         public OwnerDTO OwnerInfo { get; set; } = null!;
     }
 }

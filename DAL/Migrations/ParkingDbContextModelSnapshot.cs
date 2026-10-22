@@ -159,6 +159,9 @@ namespace DAL.Migrations
                     b.Property<bool>("EvCharger")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 

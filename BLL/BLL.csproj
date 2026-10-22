@@ -28,5 +28,10 @@
 	</ItemGroup>
 	<!-- סוף רשימת הפרויקטים -->
 
+	<ItemGroup>
+		<!-- מאפשר להשתמש ב-IFormFile (קובץ שהגיע מהדפדפן) -->
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
 </Project>
 <!-- סוף הגדרות הפרויקט -->
