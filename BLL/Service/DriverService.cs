@@ -4,10 +4,11 @@ using AutoMapper;
 using DAL.Repositories;
 using DTO;
 using DAL;
+using BLL.Interfaces;
 
 namespace BLL
 {
-    public class DriverService
+    public class DriverService:IDriverService
     {
         private readonly IDriverRepository _driverRepo;
         private readonly IMapper _mapper;

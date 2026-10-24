@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using BLL.Services;
+using BLL.Interfaces;
 using DTO;
 
 namespace Parking.Controllers
@@ -8,9 +9,9 @@ namespace Parking.Controllers
     [ApiController]
     public class ReviewsController : ControllerBase
     {
-        private readonly ReviewService _reviewService;
+        private readonly IReviewService _reviewService;
 
-        public ReviewsController(ReviewService reviewService)
+        public ReviewsController(IReviewService reviewService)
         {
             _reviewService = reviewService;
         }

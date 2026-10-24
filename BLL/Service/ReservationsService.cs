@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
+using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using DTO;
 
 namespace BLL.Services
 {
-    public class ReservationsService
+    public class ReservationsService:IReservationsService
     {
         private readonly IReservationsRepository _reservationsRepo;
         private readonly IMapper _mapper;

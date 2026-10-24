@@ -1,4 +1,5 @@
 ﻿using BLL.Services;
+using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +10,9 @@ namespace Parking.Controllers
     [ApiController]
     public class ParkingSpotsController : ControllerBase
     {
-        private readonly ParkingSpotService _parkingSpotService;
+        private readonly IParkingSpotService _parkingSpotService;
 
-        public ParkingSpotsController(ParkingSpotService parkingSpotService)
+        public ParkingSpotsController(IParkingSpotService parkingSpotService)
         {
             _parkingSpotService = parkingSpotService;
         }

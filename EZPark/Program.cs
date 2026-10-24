@@ -2,6 +2,7 @@
 
 using BLL;
 using BLL.Services;
+using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,6 @@ builder.Services.AddDbContext<ParkingDbContext>(options =>
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // רישום ה-Repositories ל-DI (הזרקת תלויות)
-// רישום ה-Repositories ל-DI (הזרקת תלויות)
 builder.Services.AddScoped<IDriverRepository, DriverRepository>();
 builder.Services.AddScoped<IOwnersRepository, OwnersRepository>();
 builder.Services.AddScoped<IParkingSpotRepository, ParkingSpotRepository>();
@@ -34,14 +34,15 @@ builder.Services.AddScoped<IReviewsRepository, ReviewsRepository>();
 builder.Services.AddScoped<ISpotAvailabilityRepository, SpotAvailabilityRepository>();
 builder.Services.AddScoped<IDynamicPricingRulesRepository, DynamicPricingRulesRepository>();
 
-// רישום ה-Services ל-DI
-builder.Services.AddScoped<DriverService>();
-builder.Services.AddScoped<OwnerService>();
-builder.Services.AddScoped<ParkingSpotService>();
-builder.Services.AddScoped<ReservationsService>();
-builder.Services.AddScoped<PaymentService>();
-builder.Services.AddScoped<ReviewService>();
-builder.Services.AddScoped<SpotAvailabilityService>();
+// רישום ה-Services ל-DI מול הממשקים (Interfaces)
+builder.Services.AddScoped<IDriverService, DriverService>();
+builder.Services.AddScoped<IOwnerService, OwnerService>();
+builder.Services.AddScoped<IParkingSpotService, ParkingSpotService>();
+builder.Services.AddScoped<IReservationsService, ReservationsService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<ISpotAvailabilityService, SpotAvailabilityService>();
+builder.Services.AddScoped<IDynamicPricingService, DynamicPricingService>();
 
 var app = builder.Build();
 

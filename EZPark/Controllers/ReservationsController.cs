@@ -1,4 +1,5 @@
 ﻿using BLL.Services;
+using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +10,9 @@ namespace Parking.Controllers
     [ApiController]
     public class ReservationsController : ControllerBase
     {
-        private readonly ReservationsService _reservationsService;
+        private readonly IReservationsService _reservationsService;
 
-        public ReservationsController(ReservationsService reservationsService)
+        public ReservationsController(IReservationsService reservationsService)
         {
             _reservationsService = reservationsService;
         }

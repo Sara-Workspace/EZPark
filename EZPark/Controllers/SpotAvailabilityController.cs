@@ -1,4 +1,5 @@
 ﻿using BLL.Services;
+using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +10,9 @@ namespace Parking.Controllers
     [ApiController]
     public class SpotAvailabilityController : ControllerBase
     {
-        private readonly SpotAvailabilityService _availabilityService;
+        private readonly ISpotAvailabilityService _availabilityService;
 
-        public SpotAvailabilityController(SpotAvailabilityService availabilityService)
+        public SpotAvailabilityController(ISpotAvailabilityService availabilityService)
         {
             _availabilityService = availabilityService;
         }
