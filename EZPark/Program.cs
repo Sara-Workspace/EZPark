@@ -6,6 +6,7 @@ using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,8 +23,10 @@ builder.Services.AddDbContext<ParkingDbContext>(options =>
 
 
 // רישום AutoMapper - טוען את ההוראות מ-MappingProfile
-builder.Services.AddAutoMapper(typeof(MappingProfile));
-
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+});
 // רישום ה-Repositories ל-DI (הזרקת תלויות)
 builder.Services.AddScoped<IDriverRepository, DriverRepository>();
 builder.Services.AddScoped<IOwnersRepository, OwnersRepository>();
@@ -44,15 +47,21 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ISpotAvailabilityService, SpotAvailabilityService>();
 builder.Services.AddScoped<IDynamicPricingService, DynamicPricingService>();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+ if (app.Environment.IsDevelopment())
+    {
+    // app.MapOpenApi();
+   
+        app.UseSwagger();
+        app.UseSwaggerUI();
+ }
 
-app.UseHttpsRedirection();
+    app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
