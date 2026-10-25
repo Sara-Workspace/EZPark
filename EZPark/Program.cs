@@ -5,8 +5,15 @@ using BLL.Services;
 using DAL;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;//בשביל הכלי שפותח את הארגז לדפדפן
 
 var builder = WebApplication.CreateBuilder(args);
+
+// הנתיב המלא לתיקיית התמונות
+var imagesFolder = Path.GetFullPath(Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration["ImagesFolder"]!));
+Directory.CreateDirectory(imagesFolder); // יוצר את התיקייה אם אינה קיימת
 
 // Add services to the container.
 
@@ -52,6 +59,7 @@ builder.Services.AddScoped<ReservationsService>();
 builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<SpotAvailabilityService>();
+builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
 
 var app = builder.Build();
 
@@ -62,6 +70,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// פותח את תיקיית התמונות לדפדפן בכתובת /images
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(imagesFolder),
+    RequestPath = "/images"
+});
 
 app.UseAuthorization();
 

@@ -42,15 +42,22 @@ namespace Parking.Controllers
         }
 
         [HttpPost]
-        public ActionResult<ParkingSpotDTO> CreateParkingSpot([FromBody] ParkingSpotCreateDTO dto)
+        public ActionResult<ParkingSpotDTO> CreateParkingSpot([FromForm] ParkingSpotCreateDTO dto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var createdSpot = _parkingSpotService.CreateParkingSpot(dto);
-            return CreatedAtAction(nameof(GetParkingSpotById), new { id = createdSpot.SpotId }, createdSpot);
+            try
+            {
+                var createdSpot = _parkingSpotService.CreateParkingSpot(dto);
+                return CreatedAtAction(nameof(GetParkingSpotById), new { id = createdSpot.SpotId }, createdSpot);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message); // הקובץ לא תקין (סוג או גודל)
+            }
         }
 
         [HttpPut("{id}")]

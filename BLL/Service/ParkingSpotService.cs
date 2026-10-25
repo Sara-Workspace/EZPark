@@ -9,11 +9,13 @@ namespace BLL.Services
     {
         private readonly IParkingSpotRepository _spotRepo;
         private readonly IMapper _mapper;
+        private readonly IImageService _imageService; // חדש: שירות התמונות
 
-        public ParkingSpotService(IParkingSpotRepository spotRepo, IMapper mapper)
+        public ParkingSpotService(IParkingSpotRepository spotRepo, IMapper mapper, IImageService imageService)
         {
             _spotRepo = spotRepo;
             _mapper = mapper;
+            _imageService = imageService; // חדש
         }
 
         public List<ParkingSpotDTO> GetAllParkingSpots()
@@ -34,6 +36,10 @@ namespace BLL.Services
         {
             var spot = _mapper.Map<ParkingSpots>(dto);
             spot.IsActive = true;
+
+            // חדש: אם הגיעה תמונה - שירות התמונות שומר אותה ומחזיר את השם
+            if (dto.ImageFile != null)
+                spot.Image = _imageService.Save(dto.ImageFile);
 
             _spotRepo.AddParkingSpot(spot);
             return _mapper.Map<ParkingSpotDTO>(spot);
@@ -56,6 +62,11 @@ namespace BLL.Services
             if (spot == null) return false;
 
             _spotRepo.DeleteParkingSpot(spot);
+
+            // חדש: מוחקים גם את קובץ התמונה, כדי שלא יישאר בתיקייה סתם
+            if (spot.Image != null)
+                _imageService.Delete(spot.Image);
+
             return true;
         }
 
