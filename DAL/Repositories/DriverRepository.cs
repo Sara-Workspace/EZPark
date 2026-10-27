@@ -50,5 +50,9 @@ namespace DAL.Repositories
                 .Include(d => d.Reservations)
                 .FirstOrDefault(d => d.Email == email);
         }
+        public async Task<Driver?> GetByEmailAsync(string email)
+        {
+            return await _context.Drivers.FirstOrDefaultAsync(d => d.Email == email);
+        }
     }
 }

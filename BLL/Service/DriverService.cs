@@ -1,9 +1,10 @@
-﻿//זה שכבת המטבח- בה כתוב כל החוקים נגיד על החניון
+﻿// שכבת המטבח - בה כתובים כל החוקים והלוגיקה העסקית
 
 using AutoMapper;
+using DAL;
 using DAL.Repositories;
 using DTO;
-using DAL;
+using Microsoft.AspNetCore.Identity;
 
 namespace BLL
 {
@@ -11,11 +12,33 @@ namespace BLL
     {
         private readonly IDriverRepository _driverRepo;
         private readonly IMapper _mapper;
+        private readonly IPasswordHasher<Driver> _passwordHasher;
 
-        public DriverService(IDriverRepository driverRepo, IMapper mapper)
+        public DriverService(
+            IDriverRepository driverRepo,
+            IMapper mapper,
+            IPasswordHasher<Driver> passwordHasher)
         {
             _driverRepo = driverRepo;
             _mapper = mapper;
+            _passwordHasher = passwordHasher;
+        }
+
+        // --- מתודת האימות להתחברות (Login) ---
+        public async Task<DriverDTO?> ValidateDriverCredentialsAsync(string email, string password)
+        {
+            // 1. שליפת הנהג לפי דוא"ל מתוך ה-Repository
+            var driver = await _driverRepo.GetByEmailAsync(email);
+            if (driver == null)
+                return null;
+
+            // 2. אימות הסיסמה המוכנסת מול ה-Hash השמור במסד הנתונים
+            var verificationResult = _passwordHasher.VerifyHashedPassword(driver, driver.PasswordHash, password);
+            if (verificationResult == PasswordVerificationResult.Failed)
+                return null;
+
+            // 3. החזרת ה-DTO של הנהג במידה וההתחברות הצליחה
+            return _mapper.Map<DriverDTO>(driver);
         }
 
         public List<DriverDTO> GetAllDrivers()
@@ -39,6 +62,12 @@ namespace BLL
             // לוגיקה עסקית: אתחול ערכים ראשוניים למשתמש חדש
             driver.CreatedAt = DateTime.Now;
             driver.CreditBalance = 0;
+
+            // הצפנת הסיסמה ברישום נהג חדש
+            if (!string.IsNullOrEmpty(dto.PasswordHash))
+            {
+                driver.PasswordHash = _passwordHasher.HashPassword(driver, dto.PasswordHash);
+            }
 
             _driverRepo.AddDriver(driver);
 

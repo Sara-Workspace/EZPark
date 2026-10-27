@@ -13,5 +13,6 @@ namespace DAL.Repositories
         void DeleteOwner(Owners owner);
         Owners? GetOwnerByEmail(string email);
         Owners? GetOwnerWithSpots(int id);
+        Task<Owners?> GetByEmailAsync(string email);
     }
 }

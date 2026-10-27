@@ -2,6 +2,7 @@
 using DAL.Repositories;
 using DTO;
 using DAL;
+using Microsoft.AspNetCore.Identity;
 
 namespace BLL
 {
@@ -9,11 +10,30 @@ namespace BLL
     {
         private readonly IOwnersRepository _ownerRepo;
         private readonly IMapper _mapper;
+        private readonly IPasswordHasher<Driver> _passwordHasher;
 
-        public OwnerService(IOwnersRepository ownerRepo, IMapper mapper)
+        public OwnerService(IOwnersRepository ownerRepo, IMapper mapper, IPasswordHasher<Driver> passwordHasher)
         {
             _ownerRepo = ownerRepo;
             _mapper = mapper;
+            _passwordHasher = passwordHasher;
+        }
+
+
+        public async Task<OwnerDTO?> ValidateOwnerCredentialsAsync(string email, string password)
+        {
+            // 1. שליפת בעל החניה לפי מייל
+            var owner = await _ownerRepo.GetByEmailAsync(email);
+            if (owner == null)
+                return null;
+
+            // 2. אימות הסיסמה המוצפנת
+            var verificationResult = _passwordHasher.VerifyHashedPassword(owner, owner.PasswordHash, password);
+            if (verificationResult == PasswordVerificationResult.Failed)
+                return null;
+
+            // 3. החזרת DTO
+            return _mapper.Map<OwnerDTO>(owner);
         }
 
         public List<OwnerDTO> GetAllOwners()
@@ -75,5 +95,6 @@ namespace BLL
             if (owner == null) return null;
             return _mapper.Map<OwnerWithSpotsDTO>(owner);
         }
+    
     }
 }

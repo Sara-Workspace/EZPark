@@ -1,11 +1,13 @@
 ﻿using DAL;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace DAL.Repositories
 {
     public class OwnersRepository : IOwnersRepository
     {
         private readonly ParkingDbContext _context;
+        private readonly IPasswordHasher<Owners> _passwordHasher; // <-- לוודא שכתוב Owners
 
         public OwnersRepository(ParkingDbContext context)
         {
@@ -56,6 +58,10 @@ namespace DAL.Repositories
             return _context.Owners
                 .Include(o => o.ParkingSpots)
                 .FirstOrDefault(o => o.OwnerID == id);
+        }
+        public async Task<Owners?> GetByEmailAsync(string email)
+        {
+            return await _context.Owners.FirstOrDefaultAsync(o => o.Email == email);
         }
     }
 }

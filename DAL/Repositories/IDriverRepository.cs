@@ -12,5 +12,6 @@ namespace DAL.Repositories
         void UpdateDriver(Driver driver);
         void DeleteDriver(Driver driver);
         Driver? GetDriverByEmail(string email);
+        Task<Driver?> GetByEmailAsync(string email);
     }
 }

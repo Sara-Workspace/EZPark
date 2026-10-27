@@ -20,7 +20,7 @@ Directory.CreateDirectory(imagesFolder);
 
 // 2. הוספת קונטרולרים ו-OpenAPI
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+//builder.Services.AddOpenApi();
 
 // 3. קריאת מחרוזת חיבור למסד הנתונים
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -83,11 +83,16 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
 builder.Services.AddScoped<IPasswordHasher<Driver>, PasswordHasher<Driver>>();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+   // app.MapOpenApi();
+    app.UseSwagger();   // מייצר את קובץ ה-JSON של Swagger
+    app.UseSwaggerUI(); // מפעיל את הממשק הויזואלי בנתיב /swagger
 }
 
 app.UseHttpsRedirection();
