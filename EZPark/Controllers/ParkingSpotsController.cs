@@ -1,12 +1,15 @@
 ﻿using BLL.Services;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Parking.Extensions;
 
 namespace Parking.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ParkingSpotsController : ControllerBase
     {
         private readonly ParkingSpotService _parkingSpotService;
@@ -16,6 +19,7 @@ namespace Parking.Controllers
             _parkingSpotService = parkingSpotService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult<List<ParkingSpotDTO>> GetAllParkingSpots()
         {
@@ -23,6 +27,7 @@ namespace Parking.Controllers
             return Ok(spots);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public ActionResult<ParkingSpotDTO> GetParkingSpotById(int id)
         {
@@ -51,7 +56,7 @@ namespace Parking.Controllers
 
             try
             {
-                var createdSpot = _parkingSpotService.CreateParkingSpot(dto);
+                var createdSpot = _parkingSpotService.CreateParkingSpot(dto, User.GetUserId());
                 return CreatedAtAction(nameof(GetParkingSpotById), new { id = createdSpot.SpotId }, createdSpot);
             }
             catch (ArgumentException ex)
@@ -63,10 +68,10 @@ namespace Parking.Controllers
         [HttpPut("{id}")]
         public ActionResult<ParkingSpotDTO> UpdateParkingSpot(int id, [FromBody] ParkingSpotDTO dto)
         {
-            var updatedSpot = _parkingSpotService.UpdateParkingSpot(id, dto);
+            var updatedSpot = _parkingSpotService.UpdateParkingSpot(id, dto,User.GetUserId());
             if (updatedSpot == null)
             {
-                return NotFound($"Parking spot with ID {id} not found.");
+                return NotFound($"Parking spot with ID {id} not foundor access denied.");
             }
             return Ok(updatedSpot);
         }
@@ -74,10 +79,10 @@ namespace Parking.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteParkingSpot(int id)
         {
-            var success = _parkingSpotService.DeleteParkingSpot(id);
+            var success = _parkingSpotService.DeleteParkingSpot(id, User.GetUserId());
             if (!success)
             {
-                return NotFound($"Parking spot with ID {id} not found.");
+                return NotFound($"Parking spot with ID {id} not found or access denied.");
             }
             return NoContent();
         }

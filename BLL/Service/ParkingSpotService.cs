@@ -32,9 +32,10 @@ namespace BLL.Services
         }
 
         // לוגיקה עסקית: הגדרת חניה כפעילה כברירת מחדל בעת יצירה
-        public ParkingSpotDTO CreateParkingSpot(ParkingSpotCreateDTO dto)
+        public ParkingSpotDTO CreateParkingSpot(ParkingSpotCreateDTO dto,int ownerId)
         {
             var spot = _mapper.Map<ParkingSpots>(dto);
+            spot.OwnerId = ownerId;
             spot.IsActive = true;
 
             // חדש: אם הגיעה תמונה - שירות התמונות שומר אותה ומחזיר את השם
@@ -45,9 +46,9 @@ namespace BLL.Services
             return _mapper.Map<ParkingSpotDTO>(spot);
         }
 
-        public ParkingSpotDTO? UpdateParkingSpot(int id, ParkingSpotDTO dto)
+        public ParkingSpotDTO? UpdateParkingSpot(int id, ParkingSpotDTO dto,int ownerId)
         {
-            var spot = _spotRepo.GetParkingSpotById(id);
+            var spot = _spotRepo.GetOwnedSpot(id,ownerId);
             if (spot == null) return null;
 
             _mapper.Map(dto, spot);
@@ -56,9 +57,9 @@ namespace BLL.Services
             return _mapper.Map<ParkingSpotDTO>(spot);
         }
 
-        public bool DeleteParkingSpot(int id)
+        public bool DeleteParkingSpot(int id, int ownerId)
         {
-            var spot = _spotRepo.GetParkingSpotById(id);
+            var spot = _spotRepo.GetOwnedSpot(id, ownerId);
             if (spot == null) return false;
 
             _spotRepo.DeleteParkingSpot(spot);

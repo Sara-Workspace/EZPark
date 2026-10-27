@@ -14,7 +14,8 @@ namespace DAL
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }// סיסמה מוצפנת להתחברות
+        public string PasswordHash { get; set; } = null!; // שינוי שם מ-Password ל-PasswordHash
+        public string Role { get; set; } = "Owner";
         public string Phone { get; set; }
         public string BankDetails { get; set; } // פרטי חשבון בנק לקבלת תשלומים
         public DateTime CreatedAt { get; set; }// תאריך ושעת יצירת החשבון

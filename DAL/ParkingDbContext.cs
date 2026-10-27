@@ -29,6 +29,15 @@ namespace DAL
         {
             base.OnModelCreating(modelBuilder);
 
+            // מניעת כפילות אימיילים
+            modelBuilder.Entity<Driver>()
+                .HasIndex(d => d.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<Owners>()
+                .HasIndex(o => o.Email)
+                .IsUnique();
+            
             // מניעת שגיאת Multiple Cascade Paths עבור טבלת הביקורת מול ההזמנות
             modelBuilder.Entity<Reviews>()
                 .HasOne(r => r.Reservation)

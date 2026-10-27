@@ -11,7 +11,11 @@ namespace DAL.Repositories
         {
             _context = context;
         }
-
+        public ParkingSpots? GetOwnedSpot(int spotId, int ownerId)
+        {
+            return _context.ParkingSpots
+                .FirstOrDefault(s => s.SpotId == spotId && s.OwnerId == ownerId);
+        }
         public List<ParkingSpots> GetAllParkingSpots()
         {
             return _context.ParkingSpots

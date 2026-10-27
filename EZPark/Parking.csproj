@@ -18,6 +18,7 @@
 
 	<ItemGroup>
 		<!-- רשימת ספריות חיצוניות -->
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
 		<!-- תיעוד ה-API -->
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">

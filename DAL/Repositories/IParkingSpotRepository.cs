@@ -5,6 +5,7 @@ namespace DAL.Repositories
     public interface IParkingSpotRepository
     {
         List<ParkingSpots> GetAllParkingSpots();
+        ParkingSpots? GetOwnedSpot(int spotId, int ownerId);
         ParkingSpots? GetParkingSpotById(int id);
         void AddParkingSpot(ParkingSpots spot);
         void UpdateParkingSpot(ParkingSpots spot);

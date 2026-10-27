@@ -1,47 +1,40 @@
-//זה החלק שהעולם החיצון מדבר איתו
-
 using BLL;
 using BLL.Services;
 using DAL;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;//בשביל הכלי שפותח את הארגז לדפדפן
+using Microsoft.Extensions.FileProviders;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using Parking.Extensions; // ודאי שנוצרה תיקיית Extensions ובה הקובץ ClaimsPrincipalExtensions.cs
 
 var builder = WebApplication.CreateBuilder(args);
 
-// הנתיב המלא לתיקיית התמונות
+// 1. הגדרת נתיב התמונות
 var imagesFolder = Path.GetFullPath(Path.Combine(
     builder.Environment.ContentRootPath,
     builder.Configuration["ImagesFolder"]!));
-Directory.CreateDirectory(imagesFolder); // יוצר את התיקייה אם אינה קיימת
+Directory.CreateDirectory(imagesFolder);
 
-// Add services to the container.
-
+// 2. הוספת קונטרולרים ו-OpenAPI
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// קריאת מחרוזת החיבור למסד הנתונים
-// הערך לא כתוב בקוד, הוא נשמר במשתנה סביבה בשם ConnectionStrings__DefaultConnection
-// ASP.NET Core מתרגם את הקו התחתון הכפול __ לנקודתיים, ולכן הוא נקרא כאן בשם DefaultConnection
+// 3. קריאת מחרוזת חיבור למסד הנתונים
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// בדיקה: אם משתנה הסביבה לא הוגדר במחשב (או שהערך ריק)
-// האפליקציה נעצרת מיד עם הודעה ברורה, במקום להיכשל אחר כך בשגיאה לא מובנת מול מסד הנתונים
 if (string.IsNullOrWhiteSpace(connStr))
     throw new InvalidOperationException(
         "Connection string 'DefaultConnection' is missing. Set it as an environment variable.");
 
-// רישום ה-DbContext עם מחרוזת החיבור שקראנו ממשתנה הסביבה
 builder.Services.AddDbContext<ParkingDbContext>(options =>
     options.UseSqlServer(connStr));
 
-
-// רישום AutoMapper - טוען את ההוראות מ-MappingProfile
+// 4. רישום AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// רישום ה-Repositories ל-DI (הזרקת תלויות)
-// רישום ה-Repositories ל-DI (הזרקת תלויות)
+// 5. רישום ה-Repositories ל-DI
 builder.Services.AddScoped<IDriverRepository, DriverRepository>();
 builder.Services.AddScoped<IOwnersRepository, OwnersRepository>();
 builder.Services.AddScoped<IParkingSpotRepository, ParkingSpotRepository>();
@@ -51,7 +44,7 @@ builder.Services.AddScoped<IReviewsRepository, ReviewsRepository>();
 builder.Services.AddScoped<ISpotAvailabilityRepository, SpotAvailabilityRepository>();
 builder.Services.AddScoped<IDynamicPricingRulesRepository, DynamicPricingRulesRepository>();
 
-// רישום ה-Services ל-DI
+// 6. רישום ה-Services ל-DI
 builder.Services.AddScoped<DriverService>();
 builder.Services.AddScoped<OwnerService>();
 builder.Services.AddScoped<ParkingSpotService>();
@@ -61,9 +54,37 @@ builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<SpotAvailabilityService>();
 builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
 
+// 7. הגדרת אימות JWT
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new InvalidOperationException("Jwt:Key is missing. Set the environment variable Jwt__Key.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// 8. רישום שירותי אבטחה ב-DI
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
+builder.Services.AddScoped<IPasswordHasher<Driver>, PasswordHasher<Driver>>();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -71,13 +92,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// פותח את תיקיית התמונות לדפדפן בכתובת /images
+// 9. הגשת תמונות סטטיות
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(imagesFolder),
     RequestPath = "/images"
 });
 
+// 10. הפעלת מנגנון האימות וההרשאות בסדר הנכון (קודם Authentication ואחר כך Authorization)
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

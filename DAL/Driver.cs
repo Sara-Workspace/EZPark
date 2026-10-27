@@ -14,7 +14,8 @@ namespace DAL
             public string FirstName { get; set; }
             public string LastName { get; set; }
             public string Email { get; set; }
-            public string Password { get; set; } // סיסמה מוצפנת להתחברות
+            public string PasswordHash { get; set; } = null!; // שינוי שם מ-Password ל-PasswordHash
+            public string Role { get; set; } = "Driver";
             public string Phone { get; set; }
             public decimal CreditBalance { get; set; } // יתרת ארנק דיגיטלי באפליקציה (כפי שמופיע בשרטוט שלך)
             public int PaymentMethodID { get; set; } // מזהה אמצעי התשלום השמור של הנהג

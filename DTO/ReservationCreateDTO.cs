@@ -9,7 +9,6 @@ namespace DTO
     public class ReservationCreateDTO
     {
         public int SpotID { get; set; }
-        public int DriverID { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public bool UseCharging { get; set; }
