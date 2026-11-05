@@ -7,7 +7,7 @@ namespace DAL.Repositories
     public class OwnersRepository : IOwnersRepository
     {
         private readonly ParkingDbContext _context;
-        private readonly IPasswordHasher<Owners> _passwordHasher; // <-- לוודא שכתוב Owners
+        
 
         public OwnersRepository(ParkingDbContext context)
         {

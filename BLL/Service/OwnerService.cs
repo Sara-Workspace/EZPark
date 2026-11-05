@@ -10,9 +10,10 @@ namespace BLL
     {
         private readonly IOwnersRepository _ownerRepo;
         private readonly IMapper _mapper;
-        private readonly IPasswordHasher<Driver> _passwordHasher;
+        private readonly IPasswordHasher<Owners> _passwordHasher;
 
-        public OwnerService(IOwnersRepository ownerRepo, IMapper mapper, IPasswordHasher<Driver> passwordHasher)
+
+        public OwnerService(IOwnersRepository ownerRepo, IMapper mapper, IPasswordHasher<Owners> passwordHasher)
         {
             _ownerRepo = ownerRepo;
             _mapper = mapper;
