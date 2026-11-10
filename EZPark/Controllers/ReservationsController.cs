@@ -1,12 +1,15 @@
 ﻿using BLL.Services;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Parking.Extensions;
 
 namespace Parking.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ReservationsController : ControllerBase
     {
         private readonly ReservationsService _reservationsService;
@@ -34,13 +37,21 @@ namespace Parking.Controllers
             return Ok(reservation);
         }
 
+        [Authorize(Roles = "Driver")]
         [HttpGet("driver/{driverId}")]
         public ActionResult<List<ReservationDTO>> GetReservationsByDriverId(int driverId)
         {
+            // וידוא שהנהג מורשה לצפות אך ורק בהזמנות של עצמו
+            if (driverId != User.GetUserId())
+            {
+                return Forbid();
+            }
+
             var reservations = _reservationsService.GetReservationsByDriverId(driverId);
             return Ok(reservations);
         }
 
+        [Authorize(Roles = "Driver")]
         [HttpPost]
         public ActionResult<ReservationDTO> CreateReservation([FromBody] ReservationCreateDTO dto)
         {
@@ -48,6 +59,9 @@ namespace Parking.Controllers
             {
                 return BadRequest(ModelState);
             }
+
+            // חילוץ מזהה הנהג מתוך ה-JWT Token והשמתו ב-DTO למניעת זיוף מזהה
+            dto.DriverId = User.GetUserId(); // (אם ב-DTO השדה נקרא DriverId ב-i קטנה, עדכני בהתאם)
 
             var createdReservation = _reservationsService.CreateReservation(dto);
             return CreatedAtAction(nameof(GetReservationById), new { id = createdReservation.ReservationID }, createdReservation);

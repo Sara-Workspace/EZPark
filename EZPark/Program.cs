@@ -1,4 +1,4 @@
-using BLL;
+ο»Ώusing BLL;
 using BLL.Services;
 using DAL;
 using DAL.Repositories;
@@ -8,21 +8,20 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using Parking.Extensions; // εγΰι ωπεφψδ ϊιχιιϊ Extensions εαδ δχεαυ ClaimsPrincipalExtensions.cs
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. δβγψϊ πϊια δϊξεπεϊ
+// 1. Χ”Χ’Χ“Χ¨Χª Χ ΧªΧ™Χ‘ Χ”ΧªΧΧ•Χ Χ•Χª
 var imagesFolder = Path.GetFullPath(Path.Combine(
     builder.Environment.ContentRootPath,
     builder.Configuration["ImagesFolder"]!));
 Directory.CreateDirectory(imagesFolder);
 
-// 2. δερτϊ χεπθψεμψιν ε-OpenAPI
+// 2. Χ”Χ•Χ΅Χ¤Χª Χ§Χ•Χ ΧΧ¨Χ•ΧΧ¨Χ™Χ
 builder.Services.AddControllers();
-//builder.Services.AddOpenApi();
 
-// 3. χψιΰϊ ξηψεζϊ ηιαεψ μξργ δπϊεπιν
+// 3. Χ§Χ¨Χ™ΧΧª ΧΧ—Χ¨Χ•Χ–Χª Χ—Χ™Χ‘Χ•Χ¨ ΧΧΧ΅Χ“ Χ”Χ ΧªΧ•Χ Χ™Χ
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connStr))
     throw new InvalidOperationException(
@@ -31,10 +30,10 @@ if (string.IsNullOrWhiteSpace(connStr))
 builder.Services.AddDbContext<ParkingDbContext>(options =>
     options.UseSqlServer(connStr));
 
-// 4. ψιωεν AutoMapper
+// 4. Χ¨Χ™Χ©Χ•Χ AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// 5. ψιωεν δ-Repositories μ-DI
+// 5. Χ¨Χ™Χ©Χ•Χ Χ”-Repositories Χ-DI
 builder.Services.AddScoped<IDriverRepository, DriverRepository>();
 builder.Services.AddScoped<IOwnersRepository, OwnersRepository>();
 builder.Services.AddScoped<IParkingSpotRepository, ParkingSpotRepository>();
@@ -44,9 +43,10 @@ builder.Services.AddScoped<IReviewsRepository, ReviewsRepository>();
 builder.Services.AddScoped<ISpotAvailabilityRepository, SpotAvailabilityRepository>();
 builder.Services.AddScoped<IDynamicPricingRulesRepository, DynamicPricingRulesRepository>();
 
-// 6. ψιωεν δ-Services μ-DI
+// 6. Χ¨Χ™Χ©Χ•Χ Χ”-Services Χ-DI
 builder.Services.AddScoped<DriverService>();
 builder.Services.AddScoped<OwnerService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ParkingSpotService>();
 builder.Services.AddScoped<ReservationsService>();
 builder.Services.AddScoped<PaymentService>();
@@ -54,7 +54,11 @@ builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<SpotAvailabilityService>();
 builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
 
-// 7. δβγψϊ ΰιξεϊ JWT
+// 7. Χ¨Χ™Χ©Χ•Χ Χ©Χ™Χ¨Χ•ΧªΧ™ ΧΧ‘ΧΧ—Χ” Χ‘-DI
+builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
+builder.Services.AddScoped<IPasswordHasher<Driver>, PasswordHasher<Driver>>();
+
+// 8. Χ”Χ’Χ“Χ¨Χª ΧΧ™ΧΧ•Χª JWT
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
     throw new InvalidOperationException("Jwt:Key is missing. Set the environment variable Jwt__Key.");
@@ -78,33 +82,69 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// 8. ψιωεν ωιψεϊι ΰαθηδ α-DI
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
-builder.Services.AddScoped<IPasswordHasher<Driver>, PasswordHasher<Driver>>();
-
+// 9. Χ”Χ’Χ“Χ¨Χª Swagger ΧΆΧ Χ›Χ¤ΧªΧ•Χ¨ Authorize Χ-JWT
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "EZPark API", Version = "v1" });
 
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Χ”Χ–Χ ΧΧª Χ”ΧΧ•Χ§Χ Χ‘Χ¤Χ•Χ¨ΧΧ: Bearer {your_token}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Χ”Χ›ΧªΧ•Χ‘Χª Χ©Χ Vite
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-   // app.MapOpenApi();
-    app.UseSwagger();   // ξιιφψ ΰϊ χεαυ δ-JSON ωμ Swagger
-    app.UseSwaggerUI(); // ξτςιμ ΰϊ δξξωχ δειζεΰμι απϊια /swagger
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+app.UseRouting();
+
+// β… Χ—Χ™Χ™Χ‘ ΧΧ”Χ•Χ¤Χ™ΧΆ Χ‘ΧΧ™Χ§Χ•Χ Χ”Χ–Χ” - ΧΧ¤Χ Χ™ UseAuthentication Χ•-UseAuthorization!
+app.UseCors("AllowReactApp");
+
 
 app.UseHttpsRedirection();
 
-// 9. δβωϊ ϊξεπεϊ ρθθιεϊ
+// 10. Χ”Χ’Χ©Χª ΧªΧΧ•Χ Χ•Χª Χ΅ΧΧΧ™Χ•Χª
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(imagesFolder),
     RequestPath = "/images"
 });
 
-// 10. δτςμϊ ξπβπεο δΰιξεϊ εδδψωΰεϊ αργψ δπλεο (χεγν Authentication εΰηψ λκ Authorization)
+// 11. Χ”Χ¤ΧΆΧΧª ΧΧ™ΧΧ•Χª Χ•Χ”Χ¨Χ©ΧΧ•Χª
 app.UseAuthentication();
 app.UseAuthorization();
 

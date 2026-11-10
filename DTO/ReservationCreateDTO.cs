@@ -12,5 +12,6 @@ namespace DTO
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public bool UseCharging { get; set; }
+        public int DriverId { get; set; }
     }
 }

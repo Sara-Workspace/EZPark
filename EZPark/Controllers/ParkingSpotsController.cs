@@ -1,7 +1,6 @@
 ﻿using BLL.Services;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Parking.Extensions;
 
@@ -39,13 +38,20 @@ namespace Parking.Controllers
             return Ok(spot);
         }
 
+        [Authorize(Roles = "Owner")]
         [HttpGet("owner/{ownerId}")]
         public ActionResult<List<ParkingSpotDTO>> GetParkingSpotsByOwnerId(int ownerId)
         {
+            if (ownerId != User.GetUserId())
+            {
+                return Forbid();
+            }
+
             var spots = _parkingSpotService.GetParkingSpotsByOwnerId(ownerId);
             return Ok(spots);
         }
 
+        [Authorize(Roles = "Owner")]
         [HttpPost]
         public ActionResult<ParkingSpotDTO> CreateParkingSpot([FromForm] ParkingSpotCreateDTO dto)
         {
@@ -61,21 +67,23 @@ namespace Parking.Controllers
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message); // הקובץ לא תקין (סוג או גודל)
+                return BadRequest(ex.Message);
             }
         }
 
+        [Authorize(Roles = "Owner")]
         [HttpPut("{id}")]
         public ActionResult<ParkingSpotDTO> UpdateParkingSpot(int id, [FromBody] ParkingSpotDTO dto)
         {
-            var updatedSpot = _parkingSpotService.UpdateParkingSpot(id, dto,User.GetUserId());
+            var updatedSpot = _parkingSpotService.UpdateParkingSpot(id, dto, User.GetUserId());
             if (updatedSpot == null)
             {
-                return NotFound($"Parking spot with ID {id} not foundor access denied.");
+                return NotFound($"Parking spot with ID {id} not found or access denied.");
             }
             return Ok(updatedSpot);
         }
 
+        [Authorize(Roles = "Owner")]
         [HttpDelete("{id}")]
         public IActionResult DeleteParkingSpot(int id)
         {

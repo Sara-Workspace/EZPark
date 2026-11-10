@@ -57,6 +57,11 @@ namespace BLL
 
             owner.CreatedAt = DateTime.Now;
 
+            if (!string.IsNullOrEmpty(dto.PasswordHash))
+            {
+                owner.PasswordHash = _passwordHasher.HashPassword(owner, dto.PasswordHash);
+            }
+
             _ownerRepo.AddOwner(owner);
 
             return _mapper.Map<OwnerDTO>(owner);

@@ -1,25 +1,24 @@
-﻿//זה שכבה - דלת של המסעדה כמו מלצר
-
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using BLL.Services;
 using DTO;
+using Parking.Extensions;
 using BLL;
 
 namespace Parking.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DriversController : ControllerBase
     {
         private readonly DriverService _driverService;
 
-        // הזרקת ה-Service בבנאי (Dependency Injection)
         public DriversController(DriverService driverService)
         {
             _driverService = driverService;
         }
 
-        // GET: api/drivers
         [HttpGet]
         public ActionResult<List<DriverDTO>> GetAllDrivers()
         {
@@ -27,7 +26,6 @@ namespace Parking.Controllers
             return Ok(drivers);
         }
 
-        // GET: api/drivers/5
         [HttpGet("{id}")]
         public ActionResult<DriverDTO> GetDriverById(int id)
         {
@@ -39,7 +37,7 @@ namespace Parking.Controllers
             return Ok(driver);
         }
 
-        // POST: api/drivers
+        [AllowAnonymous]
         [HttpPost]
         public ActionResult<DriverDTO> CreateDriver([FromBody] DriverCreateDTO dto)
         {
@@ -52,10 +50,15 @@ namespace Parking.Controllers
             return CreatedAtAction(nameof(GetDriverById), new { id = createdDriver.DriverID }, createdDriver);
         }
 
-        // PUT: api/drivers/5
+        [Authorize(Roles = "Driver")]
         [HttpPut("{id}")]
         public ActionResult<DriverDTO> UpdateDriver(int id, [FromBody] DriverUpdateDTO dto)
         {
+            if (id != User.GetUserId())
+            {
+                return Forbid();
+            }
+
             var updatedDriver = _driverService.UpdateDriver(id, dto);
             if (updatedDriver == null)
             {
@@ -64,10 +67,15 @@ namespace Parking.Controllers
             return Ok(updatedDriver);
         }
 
-        // DELETE: api/drivers/5
+        [Authorize(Roles = "Driver")]
         [HttpDelete("{id}")]
         public IActionResult DeleteDriver(int id)
         {
+            if (id != User.GetUserId())
+            {
+                return Forbid();
+            }
+
             var success = _driverService.DeleteDriver(id);
             if (!success)
             {
@@ -76,10 +84,15 @@ namespace Parking.Controllers
             return NoContent();
         }
 
-        // POST: api/drivers/5/topup (לדוגמה לפעולה חישובית/עסקית)
+        [Authorize(Roles = "Driver")]
         [HttpPost("{id}/topup")]
         public ActionResult<DriverDTO> TopUpWallet(int id, [FromBody] decimal amount)
         {
+            if (id != User.GetUserId())
+            {
+                return Forbid();
+            }
+
             try
             {
                 var driver = _driverService.TopUpWallet(id, amount);

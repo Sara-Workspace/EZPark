@@ -1,23 +1,24 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using BLL.Services;
 using DTO;
+using Parking.Extensions;
 using BLL;
 
 namespace Parking.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class OwnersController : ControllerBase
     {
         private readonly OwnerService _ownerService;
 
-        // הזרקת ה-Service של בעלי החניות
         public OwnersController(OwnerService ownerService)
         {
             _ownerService = ownerService;
         }
 
-        // GET: api/owners
         [HttpGet]
         public ActionResult<List<OwnerDTO>> GetAllOwners()
         {
@@ -25,7 +26,6 @@ namespace Parking.Controllers
             return Ok(owners);
         }
 
-        // GET: api/owners/5
         [HttpGet("{id}")]
         public ActionResult<OwnerDTO> GetOwnerById(int id)
         {
@@ -37,7 +37,6 @@ namespace Parking.Controllers
             return Ok(owner);
         }
 
-        // GET: api/owners/5/spots (שליפת בעל חניה כולל רשימת החניות שלו)
         [HttpGet("{id}/spots")]
         public ActionResult<OwnerWithSpotsDTO> GetOwnerWithSpots(int id)
         {
@@ -49,7 +48,7 @@ namespace Parking.Controllers
             return Ok(ownerWithSpots);
         }
 
-        // POST: api/owners
+        [AllowAnonymous]
         [HttpPost]
         public ActionResult<OwnerDTO> CreateOwner([FromBody] OwnerCreateDTO dto)
         {
@@ -62,10 +61,15 @@ namespace Parking.Controllers
             return CreatedAtAction(nameof(GetOwnerById), new { id = createdOwner.OwnerID }, createdOwner);
         }
 
-        // PUT: api/owners/5
+        [Authorize(Roles = "Owner")]
         [HttpPut("{id}")]
         public ActionResult<OwnerDTO> UpdateOwner(int id, [FromBody] OwnerUpdateDTO dto)
         {
+            if (id != User.GetUserId())
+            {
+                return Forbid();
+            }
+
             var updatedOwner = _ownerService.UpdateOwner(id, dto);
             if (updatedOwner == null)
             {
@@ -74,10 +78,15 @@ namespace Parking.Controllers
             return Ok(updatedOwner);
         }
 
-        // DELETE: api/owners/5
+        [Authorize(Roles = "Owner")]
         [HttpDelete("{id}")]
         public IActionResult DeleteOwner(int id)
         {
+            if (id != User.GetUserId())
+            {
+                return Forbid();
+            }
+
             var success = _ownerService.DeleteOwner(id);
             if (!success)
             {
