@@ -18,7 +18,7 @@ namespace Parking.Controllers
         {
             _reservationsService = reservationsService;
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<List<ReservationDTO>> GetAllReservations()
         {

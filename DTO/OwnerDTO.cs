@@ -15,5 +15,6 @@ namespace DTO
         public string Phone { get; set; } = string.Empty;
         public string BankDetails { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public bool IsAdmin { get; set; }
     }
 }

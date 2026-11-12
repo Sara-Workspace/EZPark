@@ -30,42 +30,18 @@ namespace DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DriverID"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<decimal>("CreditBalance")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PaymentMethodID")
                         .HasColumnType("int");
 
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("DriverID");
 
-                    b.HasIndex("Email")
+                    b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("Drivers");
@@ -116,36 +92,12 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("OwnerID");
 
-                    b.HasIndex("Email")
+                    b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("Owners");
@@ -344,6 +296,59 @@ namespace DAL.Migrations
                     b.ToTable("SpotAvailability");
                 });
 
+            modelBuilder.Entity("DAL.Users", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("DAL.Driver", b =>
+                {
+                    b.HasOne("DAL.Users", "User")
+                        .WithOne("Driver")
+                        .HasForeignKey("DAL.Driver", "UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DAL.DynamicPricingRules", b =>
                 {
                     b.HasOne("DAL.ParkingSpots", "ParkingSpot")
@@ -353,6 +358,17 @@ namespace DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("ParkingSpot");
+                });
+
+            modelBuilder.Entity("DAL.Owners", b =>
+                {
+                    b.HasOne("DAL.Users", "User")
+                        .WithOne("Owner")
+                        .HasForeignKey("DAL.Owners", "UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DAL.ParkingSpots", b =>
@@ -455,6 +471,13 @@ namespace DAL.Migrations
                 {
                     b.Navigation("Payment")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("DAL.Users", b =>
+                {
+                    b.Navigation("Driver");
+
+                    b.Navigation("Owner");
                 });
 #pragma warning restore 612, 618
         }

@@ -18,7 +18,7 @@ namespace Parking.Controllers
         {
             _ownerService = ownerService;
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<List<OwnerDTO>> GetAllOwners()
         {

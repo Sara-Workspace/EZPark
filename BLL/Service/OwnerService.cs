@@ -25,11 +25,11 @@ namespace BLL
         {
             // 1. שליפת בעל החניה לפי מייל
             var owner = await _ownerRepo.GetByEmailAsync(email);
-            if (owner == null)
+            if (owner == null || owner.User == null)
                 return null;
 
             // 2. אימות הסיסמה המוצפנת
-            var verificationResult = _passwordHasher.VerifyHashedPassword(owner, owner.PasswordHash, password);
+            var verificationResult = _passwordHasher.VerifyHashedPassword(owner, owner.User.PasswordHash, password);
             if (verificationResult == PasswordVerificationResult.Failed)
                 return null;
 
@@ -53,13 +53,22 @@ namespace BLL
         // לוגיקה עסקית: יצירת בעל חניה חדש ואתחול שדות ברירת מחדל כמו תאריך יצירה
         public OwnerDTO CreateOwner(OwnerCreateDTO dto)
         {
-            var owner = _mapper.Map<Owners>(dto);
-
-            owner.CreatedAt = DateTime.Now;
+            var owner = new Owners
+            {
+                BankDetails = dto.BankDetails,
+                User = new Users
+                {
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    Email = dto.Email,
+                    Phone = dto.Phone,
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
 
             if (!string.IsNullOrEmpty(dto.PasswordHash))
             {
-                owner.PasswordHash = _passwordHasher.HashPassword(owner, dto.PasswordHash);
+                owner.User.PasswordHash = _passwordHasher.HashPassword(owner, dto.PasswordHash);
             }
 
             _ownerRepo.AddOwner(owner);
@@ -72,7 +81,15 @@ namespace BLL
             var owner = _ownerRepo.GetOwnerById(id);
             if (owner == null) return null;
 
-            _mapper.Map(dto, owner);
+            owner.BankDetails = dto.BankDetails;
+            if (owner.User != null)
+            {
+                owner.User.FirstName = dto.FirstName;
+                owner.User.LastName = dto.LastName;
+                owner.User.Phone = dto.Phone;
+            }
+
+           
             _ownerRepo.UpdateOwner(owner);
 
             return _mapper.Map<OwnerDTO>(owner);

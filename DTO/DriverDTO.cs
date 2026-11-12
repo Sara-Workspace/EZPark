@@ -16,5 +16,6 @@ namespace DTO
         public decimal CreditBalance { get; set; }
         public int PaymentMethodID { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsAdmin { get; set; }
     }
 }

@@ -18,7 +18,7 @@ namespace Parking.Controllers
         {
             _driverService = driverService;
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<List<DriverDTO>> GetAllDrivers()
         {

@@ -29,11 +29,11 @@ namespace BLL
         {
             // 1. שליפת הנהג לפי דוא"ל מתוך ה-Repository
             var driver = await _driverRepo.GetByEmailAsync(email);
-            if (driver == null)
+            if (driver == null || driver.User == null)
                 return null;
 
             // 2. אימות הסיסמה המוכנסת מול ה-Hash השמור במסד הנתונים
-            var verificationResult = _passwordHasher.VerifyHashedPassword(driver, driver.PasswordHash, password);
+            var verificationResult = _passwordHasher.VerifyHashedPassword(driver, driver.User.PasswordHash, password);
             if (verificationResult == PasswordVerificationResult.Failed)
                 return null;
 
@@ -57,16 +57,24 @@ namespace BLL
         // לוגיקה עסקית / חישובית: קביעת תאריך יצירה, איפוס יתרה התחלתית ובדיקות תקינות
         public DriverDTO CreateDriver(DriverCreateDTO dto)
         {
-            var driver = _mapper.Map<Driver>(dto);
-
-            // לוגיקה עסקית: אתחול ערכים ראשוניים למשתמש חדש
-            driver.CreatedAt = DateTime.Now;
-            driver.CreditBalance = 0;
+            var driver = new Driver
+            {
+                CreditBalance = 0,
+                PaymentMethodID = dto.PaymentMethodID,
+                User = new Users
+                {
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    Email = dto.Email,
+                    Phone = dto.Phone,
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
 
             // הצפנת הסיסמה ברישום נהג חדש
             if (!string.IsNullOrEmpty(dto.PasswordHash))
             {
-                driver.PasswordHash = _passwordHasher.HashPassword(driver, dto.PasswordHash);
+                driver.User.PasswordHash = _passwordHasher.HashPassword(driver, dto.PasswordHash);
             }
 
             _driverRepo.AddDriver(driver);
@@ -79,7 +87,13 @@ namespace BLL
             var driver = _driverRepo.GetDriverById(id);
             if (driver == null) return null;
 
-            _mapper.Map(dto, driver);
+            if (driver.User != null)
+            {
+                driver.User.FirstName = dto.FirstName;
+                driver.User.LastName = dto.LastName;
+                driver.User.Phone = dto.Phone;
+            }
+
             _driverRepo.UpdateDriver(driver);
 
             return _mapper.Map<DriverDTO>(driver);

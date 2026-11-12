@@ -17,6 +17,7 @@ namespace DAL.Repositories
         {
 
             return _context.Drivers
+                .Include(d => d.User)
                 .Include(d => d.Reservations)
                 .ToList();
         }
@@ -48,11 +49,13 @@ namespace DAL.Repositories
         {
             return _context.Drivers
                 .Include(d => d.Reservations)
-                .FirstOrDefault(d => d.Email == email);
+                .FirstOrDefault(d => d.User.Email == email);
         }
         public async Task<Driver?> GetByEmailAsync(string email)
         {
-            return await _context.Drivers.FirstOrDefaultAsync(d => d.Email == email);
+            return await _context.Drivers
+                .Include(d => d.User)
+                .FirstOrDefaultAsync(d => d.User.Email == email);
         }
     }
 }

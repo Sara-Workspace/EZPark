@@ -17,8 +17,9 @@ namespace DAL.Repositories
         public List<Owners> GetAllOwners()
         {
             return _context.Owners
-                .Include(o=>o.ParkingSpots)
-                .ToList();
+        .Include(o => o.User)
+        .Include(o => o.ParkingSpots)
+        .ToList();
         }
 
         public Owners? GetOwnerById(int id)
@@ -50,7 +51,7 @@ namespace DAL.Repositories
         {
             return _context.Owners
                 .Include(o => o.ParkingSpots)
-                .FirstOrDefault(o => o.Email == email);
+                .FirstOrDefault(o => o.User.Email == email);
         }
 
         public Owners? GetOwnerWithSpots(int id)
@@ -61,7 +62,9 @@ namespace DAL.Repositories
         }
         public async Task<Owners?> GetByEmailAsync(string email)
         {
-            return await _context.Owners.FirstOrDefaultAsync(o => o.Email == email);
+            return await _context.Owners
+                .Include(d => d.User)
+                .FirstOrDefaultAsync(o => o.User.Email == email);
         }
     }
 }

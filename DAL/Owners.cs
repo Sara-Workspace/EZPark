@@ -11,16 +11,15 @@ namespace DAL
     {
         [Key]
         public int OwnerID { get; set; } // מפתח ראשי - מזהה ייחודי לכל משכיר
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Email { get; set; }
-        public string PasswordHash { get; set; } = null!; // שינוי שם מ-Password ל-PasswordHash
-        public string Role { get; set; } = "Owner";
-        public string Phone { get; set; }
-        public string BankDetails { get; set; } // פרטי חשבון בנק לקבלת תשלומים
-        public DateTime CreatedAt { get; set; }// תאריך ושעת יצירת החשבון
 
-        // רשימת החניות שבבעלות המשכיר הזה (מקושר לטבלת ParkingSpots)
+        public int UserId { get; set; } // מפתח זר המקשר לטבלת Users המאוחדת
+
+        public string BankDetails { get; set; } = string.Empty; // פרטי חשבון בנק לקבלת תשלומים
+
+        // ניווט לטבלת המשתמש המאוחדת (מכילה שם, אימייל, סיסמה וטלפון)
+        public Users User { get; set; } = null!;
+
+        // רשימת החניות שבבעלות המשכיר הזה (נשאר ללא שינוי!)
         public List<ParkingSpots> ParkingSpots { get; set; } = new List<ParkingSpots>();
 
     }

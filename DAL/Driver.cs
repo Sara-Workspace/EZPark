@@ -9,22 +9,21 @@ namespace DAL
 {
     public class Driver
     {
-            [Key]
-            public int DriverID { get; set; }// מפתח ראשי - מזהה ייחודי לכל שוכר
-            public string FirstName { get; set; }
-            public string LastName { get; set; }
-            public string Email { get; set; }
-            public string PasswordHash { get; set; } = null!; // שינוי שם מ-Password ל-PasswordHash
-            public string Role { get; set; } = "Driver";
-            public string Phone { get; set; }
-            public decimal CreditBalance { get; set; } // יתרת ארנק דיגיטלי באפליקציה (כפי שמופיע בשרטוט שלך)
-            public int PaymentMethodID { get; set; } // מזהה אמצעי התשלום השמור של הנהג
-            public DateTime CreatedAt { get; set; }// תאריך ושעת יצירת החשבון
+        [Key]
+        public int DriverID { get; set; } // מפתח ראשי - מזהה ייחודי לכל נהג
 
-        // רשימת ההזמנות שביצע השוכר הזה (מקושר לטבלת Reservations)
+        public int UserId { get; set; } // מפתח זר המקשר לטבלת Users המאוחדת
+
+        public decimal CreditBalance { get; set; } // יתרת ארנק דיגיטלי
+        public int PaymentMethodID { get; set; } // מזהה אמצעי התשלום השמור
+
+        // ניווט לטבלת המשתמש המאוחדת (מכילה שם, אימייל, סיסמה וטלפון)
+        public Users User { get; set; } = null!;
+
+        // רשימת ההזמנות שביצע השוכר הזה (נשאר ללא שינוי!)
         public List<Reservations> Reservations { get; set; } = new List<Reservations>();
 
-        // רשימת הביקורות שהשוכר הזה כתב (מקושר לטבלת Reviews)
+        // רשימת הביקורות שהשוכר הזה כתב (נשאר ללא שינוי!)
         public List<Reviews> Reviews { get; set; } = new List<Reviews>();
 
     }

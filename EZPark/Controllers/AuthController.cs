@@ -23,40 +23,46 @@ namespace Parking.Controllers
             _tokenService = tokenService;
         }
 
-        // 1. התחברות בעל חניה
-        [HttpPost("owner/login")]
-        public async Task<IActionResult> OwnerLogin([FromBody] LoginDTO dto)
+        /// <summary>
+        /// התחברות מאוחדת לכלל המשתמשים (נהג, בעל חניה או מנהל)
+        /// </summary>
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO dto)
         {
-            var owner = await _ownerService.ValidateOwnerCredentialsAsync(dto.Email, dto.Password);
-            if (owner == null)
-                return Unauthorized(new { message = "דוא\"ל או סיסמה שגויים" });
-
-            var token = _tokenService.CreateToken(owner.OwnerID, owner.Email, "Owner");
-
-            return Ok(new
-            {
-                Token = token,
-                User = owner,
-                Role = "Owner"
-            });
-        }
-
-        // 2. התחברות נהג
-        [HttpPost("driver/login")]
-        public async Task<IActionResult> DriverLogin([FromBody] LoginDTO dto)
-        {
+            // 1. ניסיון אימות מול שירות הנהגים
             var driver = await _driverService.ValidateDriverCredentialsAsync(dto.Email, dto.Password);
-            if (driver == null)
-                return Unauthorized(new { message = "דוא\"ל או סיסמה שגויים" });
-
-            var token = _tokenService.CreateToken(driver.DriverID, driver.Email, "Driver");
-
-            return Ok(new
+            if (driver != null)
             {
-                Token = token,
-                User = driver,
-                Role = "Driver"
-            });
+                string driverRole = driver.IsAdmin ? "Admin" : "Driver";
+                var token = _tokenService.CreateToken(driver.DriverID, driver.Email, driverRole);
+
+                return Ok(new
+                {
+                    Token = token,
+                    User = driver,
+                    Role = driverRole,
+                    IsAdmin = driver.IsAdmin
+                });
+            }
+
+            // 2. ניסיון אימות מול שירות בעלי החניות
+            var owner = await _ownerService.ValidateOwnerCredentialsAsync(dto.Email, dto.Password);
+            if (owner != null)
+            {
+                string ownerRole = owner.IsAdmin ? "Admin" : "Owner";
+                var token = _tokenService.CreateToken(owner.OwnerID, owner.Email, ownerRole);
+
+                return Ok(new
+                {
+                    Token = token,
+                    User = owner,
+                    Role = ownerRole,
+                    IsAdmin = owner.IsAdmin
+                });
+            }
+
+            // 3. במידה והסיסמה או האימייל לא נמצאו בשום שירות
+            return Unauthorized(new { message = "דוא\"ל או סיסמה שגויים" });
         }
     }
 }
