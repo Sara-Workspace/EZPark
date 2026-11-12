@@ -25,6 +25,7 @@ namespace DAL.Repositories
         public Owners? GetOwnerById(int id)
         {
             return _context.Owners
+                .Include(o => o.User)            
                 .Include(o => o.ParkingSpots)
                 .FirstOrDefault(o => o.OwnerID == id);
         }
@@ -50,6 +51,7 @@ namespace DAL.Repositories
         public Owners? GetOwnerByEmail(string email)
         {
             return _context.Owners
+                .Include(o => o.User)            
                 .Include(o => o.ParkingSpots)
                 .FirstOrDefault(o => o.User.Email == email);
         }
@@ -57,6 +59,7 @@ namespace DAL.Repositories
         public Owners? GetOwnerWithSpots(int id)
         {
             return _context.Owners
+                .Include(o => o.User)            
                 .Include(o => o.ParkingSpots)
                 .FirstOrDefault(o => o.OwnerID == id);
         }

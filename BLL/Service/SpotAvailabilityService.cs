@@ -8,11 +8,16 @@ namespace BLL.Services
     public class SpotAvailabilityService
     {
         private readonly ISpotAvailabilityRepository _availabilityRepo;
+        private readonly IParkingSpotRepository _spotRepo;           // ← תיקון 4
         private readonly IMapper _mapper;
 
-        public SpotAvailabilityService(ISpotAvailabilityRepository availabilityRepo, IMapper mapper)
+        public SpotAvailabilityService(
+            ISpotAvailabilityRepository availabilityRepo,
+            IParkingSpotRepository spotRepo,                         // ← תיקון 4
+            IMapper mapper)
         {
             _availabilityRepo = availabilityRepo;
+            _spotRepo = spotRepo;
             _mapper = mapper;
         }
 
@@ -29,9 +34,12 @@ namespace BLL.Services
             return _mapper.Map<SpotAvailabilityDTO>(availability);
         }
 
-        // לוגיקה עסקית: סימון זמינות חדשה כפנויה (IsBooked = false) כברירת מחדל
-        public SpotAvailabilityDTO CreateSpotAvailability(SpotAvailabilityCreateDTO dto)
+        // ← תיקון 4: מוסיפים זמינות רק לחניה של בעל החניה המחובר
+        public SpotAvailabilityDTO? CreateSpotAvailability(SpotAvailabilityCreateDTO dto, int ownerId)
         {
+            var spot = _spotRepo.GetOwnedSpot(dto.SpotID, ownerId);
+            if (spot == null) return null;   // החניה לא קיימת, או לא שלו
+
             var availability = _mapper.Map<SpotAvailability>(dto);
             availability.IsBooked = false;
 
@@ -50,10 +58,14 @@ namespace BLL.Services
             return _mapper.Map<SpotAvailabilityDTO>(availability);
         }
 
-        public bool DeleteSpotAvailability(int id)
+        // ← תיקון 4: מוחקים זמינות רק מחניה של בעל החניה המחובר
+        public bool DeleteSpotAvailability(int id, int ownerId)
         {
             var availability = _availabilityRepo.GetSpotAvailabilityById(id);
             if (availability == null) return false;
+
+            var spot = _spotRepo.GetOwnedSpot(availability.SpotId, ownerId);
+            if (spot == null) return false;   // החניה לא שלו
 
             _availabilityRepo.DeleteSpotAvailability(availability);
             return true;

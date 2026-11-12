@@ -18,6 +18,7 @@ namespace Parking.Controllers
         {
             _reservationsService = reservationsService;
         }
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<List<ReservationDTO>> GetAllReservations()
@@ -34,6 +35,14 @@ namespace Parking.Controllers
             {
                 return NotFound($"Reservation with ID {id} not found.");
             }
+
+            // תיקון 4: רק הנהג שהזמין, או מנהל
+            bool isMine = User.IsInRole("Driver") && reservation.DriverID == User.GetUserId();
+            if (!isMine && !User.IsInRole("Admin"))
+            {
+                return NotFound($"Reservation with ID {id} not found.");
+            }
+
             return Ok(reservation);
         }
 
@@ -60,10 +69,8 @@ namespace Parking.Controllers
                 return BadRequest(ModelState);
             }
 
-            // חילוץ מזהה הנהג מתוך ה-JWT Token והשמתו ב-DTO למניעת זיוף מזהה
-            dto.DriverId = User.GetUserId(); // (אם ב-DTO השדה נקרא DriverId ב-i קטנה, עדכני בהתאם)
-
-            var createdReservation = _reservationsService.CreateReservation(dto);
+            // ← תיקון 5: מזהה הנהג מהטוקן, מועבר כפרמטר
+            var createdReservation = _reservationsService.CreateReservation(dto, User.GetUserId());
             return CreatedAtAction(nameof(GetReservationById), new { id = createdReservation.ReservationID }, createdReservation);
         }
     }

@@ -6,6 +6,7 @@ namespace DAL.Repositories
     {
         List<Reviews> GetAllReviews();
         Reviews? GetReviewById(int id);
+        Reviews? GetOwnedReview(int id, int driverId);   // ← תיקון 4
         void AddReview(Reviews review);
         void UpdateReview(Reviews review);
         void DeleteReview(Reviews review);

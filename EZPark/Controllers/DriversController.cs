@@ -18,6 +18,7 @@ namespace Parking.Controllers
         {
             _driverService = driverService;
         }
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<List<DriverDTO>> GetAllDrivers()
@@ -29,6 +30,13 @@ namespace Parking.Controllers
         [HttpGet("{id}")]
         public ActionResult<DriverDTO> GetDriverById(int id)
         {
+            // ← תיקון 4: רק הנהג עצמו, או מנהל
+            bool isMe = User.IsInRole("Driver") && id == User.GetUserId();
+            if (!isMe && !User.IsInRole("Admin"))
+            {
+                return NotFound($"Driver with ID {id} not found.");
+            }
+
             var driver = _driverService.GetDriverById(id);
             if (driver == null)
             {

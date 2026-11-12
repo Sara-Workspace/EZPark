@@ -18,6 +18,7 @@ namespace Parking.Controllers
         {
             _ownerService = ownerService;
         }
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<List<OwnerDTO>> GetAllOwners()
@@ -29,6 +30,13 @@ namespace Parking.Controllers
         [HttpGet("{id}")]
         public ActionResult<OwnerDTO> GetOwnerById(int id)
         {
+            // ← תיקון 4: רק בעל החניה עצמו, או מנהל
+            bool isMe = User.IsInRole("Owner") && id == User.GetUserId();
+            if (!isMe && !User.IsInRole("Admin"))
+            {
+                return NotFound($"Owner with ID {id} not found.");
+            }
+
             var owner = _ownerService.GetOwnerById(id);
             if (owner == null)
             {
@@ -40,6 +48,13 @@ namespace Parking.Controllers
         [HttpGet("{id}/spots")]
         public ActionResult<OwnerWithSpotsDTO> GetOwnerWithSpots(int id)
         {
+            // ← תיקון 4: רק בעל החניה עצמו, או מנהל
+            bool isMe = User.IsInRole("Owner") && id == User.GetUserId();
+            if (!isMe && !User.IsInRole("Admin"))
+            {
+                return NotFound($"Owner with ID {id} not found.");
+            }
+
             var ownerWithSpots = _ownerService.GetOwnerWithSpots(id);
             if (ownerWithSpots == null)
             {

@@ -26,6 +26,13 @@ namespace DAL.Repositories
                             .FirstOrDefault(r => r.ReviewId == id);
         }
 
+        // ← תיקון 4: מחפשים ביקורת לפי המספר שלה *וגם* לפי הנהג שכתב אותה
+        public Reviews? GetOwnedReview(int id, int driverId)
+        {
+            return _context.Reviews
+                            .FirstOrDefault(r => r.ReviewId == id && r.DriverId == driverId);
+        }
+
         public void AddReview(Reviews review)
         {
             _context.Reviews.Add(review);
