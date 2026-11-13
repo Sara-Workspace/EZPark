@@ -53,6 +53,11 @@ namespace BLL
         // לוגיקה עסקית: יצירת בעל חניה חדש ואתחול שדות ברירת מחדל כמו תאריך יצירה
         public OwnerDTO CreateOwner(OwnerCreateDTO dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.PasswordHash))
+            {
+                throw new ArgumentException("חובה להזין סיסמה בעת יצירת בעל חניה חדש");
+            }
+
             var owner = new Owners
             {
                 BankDetails = dto.BankDetails,
@@ -62,18 +67,17 @@ namespace BLL
                     LastName = dto.LastName,
                     Email = dto.Email,
                     Phone = dto.Phone,
+                    IsAdmin = false,
                     CreatedAt = DateTime.UtcNow
                 }
             };
 
-            if (!string.IsNullOrEmpty(dto.PasswordHash))
-            {
-                owner.User.PasswordHash = _passwordHasher.HashPassword(owner, dto.PasswordHash);
-            }
+            owner.User.PasswordHash = _passwordHasher.HashPassword(owner, dto.PasswordHash);
 
             _ownerRepo.AddOwner(owner);
 
             return _mapper.Map<OwnerDTO>(owner);
+        
         }
 
         public OwnerDTO? UpdateOwner(int id, OwnerUpdateDTO dto)

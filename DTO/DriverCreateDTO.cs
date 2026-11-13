@@ -14,6 +14,6 @@ namespace DTO
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty; // נדרש רק ברישום
         public string Phone { get; set; } = string.Empty;
-        public int PaymentMethodID { get; set; }
+        public int? PaymentMethodID { get; set; }
     }
 }

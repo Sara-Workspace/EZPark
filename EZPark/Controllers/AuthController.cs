@@ -34,11 +34,13 @@ namespace Parking.Controllers
             if (driver != null)
             {
                 string driverRole = driver.IsAdmin ? "Admin" : "Driver";
-                var token = _tokenService.CreateToken(driver.DriverID, driver.Email, driverRole);
+                var authData = _tokenService.CreateToken(driver.DriverID, driver.Email, driverRole);
 
                 return Ok(new
                 {
-                    Token = token,
+                    Token = authData.Token,
+                    ExpiresAt = authData.ExpiresAt,
+                    UserId = authData.UserId,
                     User = driver,
                     Role = driverRole,
                     IsAdmin = driver.IsAdmin
@@ -50,11 +52,13 @@ namespace Parking.Controllers
             if (owner != null)
             {
                 string ownerRole = owner.IsAdmin ? "Admin" : "Owner";
-                var token = _tokenService.CreateToken(owner.OwnerID, owner.Email, ownerRole);
+                var authData = _tokenService.CreateToken(owner.OwnerID, owner.Email, ownerRole);
 
                 return Ok(new
                 {
-                    Token = token,
+                    Token = authData.Token,
+                    ExpiresAt = authData.ExpiresAt,
+                    UserId = authData.UserId,
                     User = owner,
                     Role = ownerRole,
                     IsAdmin = owner.IsAdmin
