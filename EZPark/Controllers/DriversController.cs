@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using BLL.Services;
+﻿using BLL.Exceptions;
 using BLL.Interfaces;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Parking.Extensions;
-using BLL;
 
 namespace Parking.Controllers
 {
+    // אין כאן try/catch ואין בדיקות null:
+    // אם משהו לא נמצא או לא תקין, הסרוויס זורק שגיאה וה-GlobalExceptionFilter מחזיר את התשובה המתאימה
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -25,37 +26,28 @@ namespace Parking.Controllers
         [HttpGet]
         public ActionResult<List<DriverDTO>> GetAllDrivers()
         {
-            var drivers = _driverService.GetAllDrivers();
-            return Ok(drivers);
+            return Ok(_driverService.GetAllDrivers());
         }
 
         [HttpGet("{id}")]
         public ActionResult<DriverDTO> GetDriverById(int id)
         {
-            // ← תיקון 4: רק הנהג עצמו, או מנהל
+            // רק הנהג עצמו, או מנהל.
+            // מישהו אחר - עונים "לא נמצא" (404), כדי לא לגלות שהוא קיים
             bool isMe = User.IsInRole("Driver") && id == User.GetUserId();
             if (!isMe && !User.IsInRole("Admin"))
             {
-                return NotFound($"Driver with ID {id} not found.");
+                throw new NotFoundException($"נהג מספר {id} לא נמצא.");
             }
 
-            var driver = _driverService.GetDriverById(id);
-            if (driver == null)
-            {
-                return NotFound($"Driver with ID {id} not found.");
-            }
-            return Ok(driver);
+            return Ok(_driverService.GetDriverById(id));
         }
 
         [AllowAnonymous]
         [HttpPost]
         public ActionResult<DriverDTO> CreateDriver([FromBody] DriverCreateDTO dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
             var createdDriver = _driverService.CreateDriver(dto);
             return CreatedAtAction(nameof(GetDriverById), new { id = createdDriver.DriverID }, createdDriver);
         }
@@ -64,33 +56,26 @@ namespace Parking.Controllers
         [HttpPut("{id}")]
         public ActionResult<DriverDTO> UpdateDriver(int id, [FromBody] DriverUpdateDTO dto)
         {
+            // מותר לעדכן רק את עצמך
             if (id != User.GetUserId())
             {
                 return Forbid();
             }
 
-            var updatedDriver = _driverService.UpdateDriver(id, dto);
-            if (updatedDriver == null)
-            {
-                return NotFound($"Driver with ID {id} not found.");
-            }
-            return Ok(updatedDriver);
+            return Ok(_driverService.UpdateDriver(id, dto));
         }
 
         [Authorize(Roles = "Driver")]
         [HttpDelete("{id}")]
         public IActionResult DeleteDriver(int id)
         {
+            // מותר למחוק רק את עצמך
             if (id != User.GetUserId())
             {
                 return Forbid();
             }
 
-            var success = _driverService.DeleteDriver(id);
-            if (!success)
-            {
-                return NotFound($"Driver with ID {id} not found.");
-            }
+            _driverService.DeleteDriver(id);
             return NoContent();
         }
 
@@ -98,21 +83,14 @@ namespace Parking.Controllers
         [HttpPost("{id}/topup")]
         public ActionResult<DriverDTO> TopUpWallet(int id, [FromBody] decimal amount)
         {
+            // מותר לטעון רק את הארנק של עצמך
             if (id != User.GetUserId())
             {
                 return Forbid();
             }
 
-            try
-            {
-                var driver = _driverService.TopUpWallet(id, amount);
-                if (driver == null) return NotFound();
-                return Ok(driver);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            // סכום לא חיובי - הסרוויס זורק BusinessRuleException והשומר מחזיר 400
+            return Ok(_driverService.TopUpWallet(id, amount));
         }
     }
 }
