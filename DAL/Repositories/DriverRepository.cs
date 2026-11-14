@@ -60,5 +60,12 @@ namespace DAL.Repositories
                 .Include(d => d.User)
                 .FirstOrDefaultAsync(d => d.User.Email == email);
         }
+
+        // בודק בטבלת Users המשותפת: המייל תפוס גם אם הוא שייך לנהג וגם אם לבעל חניה
+        // Any = "יש לפחות שורה אחת כזאת?" - מחזיר true/false בלי לשלוף את כל הנתונים
+        public bool EmailExists(string email)
+        {
+            return _context.Users.Any(u => u.Email == email);
+        }
     }
 }

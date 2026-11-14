@@ -69,6 +69,10 @@ namespace BLL
                 throw new ArgumentException("חובה להזין סיסמה בעת יצירת נהג חדש");
             }
 
+            // כלל עסקי: אותו מייל לא יכול להירשם פעמיים - השומר מחזיר 409
+            if (_driverRepo.EmailExists(dto.Email))
+                throw new ConflictException("כתובת המייל כבר רשומה במערכת.");
+
             var driver = new Driver
             {
                 CreditBalance = 0,

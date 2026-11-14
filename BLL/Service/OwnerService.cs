@@ -63,6 +63,10 @@ namespace BLL
                 throw new ArgumentException("חובה להזין סיסמה בעת יצירת בעל חניה חדש");
             }
 
+            // כלל עסקי: אותו מייל לא יכול להירשם פעמיים - השומר מחזיר 409
+            if (_ownerRepo.EmailExists(dto.Email))
+                throw new ConflictException("כתובת המייל כבר רשומה במערכת.");
+
             var owner = new Owners
             {
                 BankDetails = dto.BankDetails,
@@ -111,7 +115,6 @@ namespace BLL
         }
 
         // חיפוש לפי מייל: כאן null זה לא שגיאה, אלא תשובה "אין בעל חניה עם המייל הזה".
-        // נשתמש בזה בהמשך כדי לבדוק אם מייל כבר תפוס בהרשמה
         public OwnerDTO? GetOwnerByEmail(string email)
         {
             var owner = _ownerRepo.GetOwnerByEmail(email);

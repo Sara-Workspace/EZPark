@@ -7,7 +7,7 @@ namespace DAL.Repositories
     public class OwnersRepository : IOwnersRepository
     {
         private readonly ParkingDbContext _context;
-        
+
 
         public OwnersRepository(ParkingDbContext context)
         {
@@ -25,7 +25,7 @@ namespace DAL.Repositories
         public Owners? GetOwnerById(int id)
         {
             return _context.Owners
-                .Include(o => o.User)            
+                .Include(o => o.User)
                 .Include(o => o.ParkingSpots)
                 .FirstOrDefault(o => o.OwnerID == id);
         }
@@ -51,7 +51,7 @@ namespace DAL.Repositories
         public Owners? GetOwnerByEmail(string email)
         {
             return _context.Owners
-                .Include(o => o.User)            
+                .Include(o => o.User)
                 .Include(o => o.ParkingSpots)
                 .FirstOrDefault(o => o.User.Email == email);
         }
@@ -59,7 +59,7 @@ namespace DAL.Repositories
         public Owners? GetOwnerWithSpots(int id)
         {
             return _context.Owners
-                .Include(o => o.User)            
+                .Include(o => o.User)
                 .Include(o => o.ParkingSpots)
                 .FirstOrDefault(o => o.OwnerID == id);
         }
@@ -68,6 +68,13 @@ namespace DAL.Repositories
             return await _context.Owners
                 .Include(d => d.User)
                 .FirstOrDefaultAsync(o => o.User.Email == email);
+        }
+
+        // בודק בטבלת Users המשותפת: המייל תפוס גם אם הוא שייך לנהג וגם אם לבעל חניה
+        // Any = "יש לפחות שורה אחת כזאת?" - מחזיר true/false בלי לשלוף את כל הנתונים
+        public bool EmailExists(string email)
+        {
+            return _context.Users.Any(u => u.Email == email);
         }
     }
 }

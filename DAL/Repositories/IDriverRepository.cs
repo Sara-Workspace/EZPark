@@ -13,5 +13,6 @@ namespace DAL.Repositories
         void DeleteDriver(Driver driver);
         Driver? GetDriverByEmail(string email);
         Task<Driver?> GetByEmailAsync(string email);
+        bool EmailExists(string email);   // האם המייל כבר רשום במערכת (אצל נהג או בעל חניה)
     }
 }
