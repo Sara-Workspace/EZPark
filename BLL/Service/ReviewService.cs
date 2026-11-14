@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
+using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using DTO;
 
 namespace BLL.Services
 {
-    public class ReviewService
+    public class ReviewService:IReviewService
     {
         private readonly IReviewsRepository _reviewRepo;
         private readonly IReservationsRepository _reservationRepo;   // ← תיקון 4

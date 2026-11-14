@@ -1,4 +1,5 @@
 ﻿using BLL.Services;
+using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,9 +13,9 @@ namespace Parking.Controllers
     [Authorize]
     public class ReservationsController : ControllerBase
     {
-        private readonly ReservationsService _reservationsService;
+        private readonly IReservationsService _reservationsService;
 
-        public ReservationsController(ReservationsService reservationsService)
+        public ReservationsController(IReservationsService reservationsService)
         {
             _reservationsService = reservationsService;
         }

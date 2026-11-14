@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
+using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using DTO;
 
 namespace BLL.Services
 {
-    public class PaymentService
+    public class PaymentService:IPaymentService
     {
         private readonly IPaymentRepository _paymentRepo;
         private readonly IReservationsRepository _reservationRepo;   // ← תיקון 4

@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
+using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using DTO;
 
 namespace BLL.Services
 {
-    public class ParkingSpotService
+    public class ParkingSpotService:IParkingSpotService
     {
         private readonly IParkingSpotRepository _spotRepo;
         private readonly IMapper _mapper;

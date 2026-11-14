@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BLL.Services;
+using BLL.Interfaces;
 using DTO;
 using Parking.Extensions;
 using BLL;
@@ -12,9 +13,10 @@ namespace Parking.Controllers
     [Authorize]
     public class OwnersController : ControllerBase
     {
-        private readonly OwnerService _ownerService;
+        private readonly IOwnerService _ownerService;
 
-        public OwnersController(OwnerService ownerService)
+        // הזרקת ה-Service של בעלי החניות
+        public OwnersController(IOwnerService ownerService)
         {
             _ownerService = ownerService;
         }

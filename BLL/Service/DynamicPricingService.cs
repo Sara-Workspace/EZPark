@@ -2,10 +2,11 @@
 using DAL.Repositories;
 using DTO;
 using DAL;
+using BLL.Interfaces;
 
 namespace BLL
 {
-    public class DynamicPricingService
+    public class DynamicPricingService:IDynamicPricingService
     {
         private readonly IDynamicPricingRulesRepository _rulesRepo;
         private readonly IMapper _mapper;

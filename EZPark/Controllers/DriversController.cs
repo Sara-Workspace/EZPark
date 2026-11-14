@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BLL.Services;
+using BLL.Interfaces;
 using DTO;
 using Parking.Extensions;
 using BLL;
@@ -12,9 +13,10 @@ namespace Parking.Controllers
     [Authorize]
     public class DriversController : ControllerBase
     {
-        private readonly DriverService _driverService;
+        private readonly IDriverService _driverService;
 
-        public DriversController(DriverService driverService)
+        // הזרקת ה-Service בבנאי (Dependency Injection)
+        public DriversController(IDriverService driverService)
         {
             _driverService = driverService;
         }

@@ -3,10 +3,11 @@ using DAL.Repositories;
 using DTO;
 using DAL;
 using Microsoft.AspNetCore.Identity;
+using BLL.Interfaces;
 
 namespace BLL
 {
-    public class OwnerService
+    public class OwnerService:IOwnerService
     {
         private readonly IOwnersRepository _ownerRepo;
         private readonly IMapper _mapper;

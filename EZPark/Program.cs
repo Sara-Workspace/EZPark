@@ -1,5 +1,6 @@
 ﻿using BLL;
 using BLL.Services;
+using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -43,15 +44,16 @@ builder.Services.AddScoped<IReviewsRepository, ReviewsRepository>();
 builder.Services.AddScoped<ISpotAvailabilityRepository, SpotAvailabilityRepository>();
 builder.Services.AddScoped<IDynamicPricingRulesRepository, DynamicPricingRulesRepository>();
 
-// 6. רישום ה-Services ל-DI
-builder.Services.AddScoped<DriverService>();
-builder.Services.AddScoped<OwnerService>();
+// 6. רישום ה-Services ל-DI דרך הממשקים (Interfaces)
+builder.Services.AddScoped<IDriverService, DriverService>();
+builder.Services.AddScoped<IOwnerService, OwnerService>();
+builder.Services.AddScoped<IParkingSpotService, ParkingSpotService>();
+builder.Services.AddScoped<IReservationsService, ReservationsService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<ISpotAvailabilityService, SpotAvailabilityService>();
+builder.Services.AddScoped<IDynamicPricingService, DynamicPricingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<ParkingSpotService>();
-builder.Services.AddScoped<ReservationsService>();
-builder.Services.AddScoped<PaymentService>();
-builder.Services.AddScoped<ReviewService>();
-builder.Services.AddScoped<SpotAvailabilityService>();
 builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
 
 // 7. רישום שירותי אבטחה ב-DI
@@ -113,6 +115,8 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+// 10. CORS בשביל React
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
@@ -122,6 +126,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -129,22 +134,22 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseRouting();
 
-// ✅ חייב להופיע במיקום הזה - לפני UseAuthentication ו-UseAuthorization!
+// חייב להופיע לפני UseAuthentication ו-UseAuthorization
 app.UseCors("AllowReactApp");
-
 
 app.UseHttpsRedirection();
 
-// 10. הגשת תמונות סטטיות
+// 11. הגשת תמונות סטטיות
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(imagesFolder),
     RequestPath = "/images"
 });
 
-// 11. הפעלת אימות והרשאות
+// 12. הפעלת אימות והרשאות
 app.UseAuthentication();
 app.UseAuthorization();
 

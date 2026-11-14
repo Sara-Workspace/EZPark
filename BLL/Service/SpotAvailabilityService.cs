@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
+using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using DTO;
 
 namespace BLL.Services
 {
-    public class SpotAvailabilityService
+    public class SpotAvailabilityService:ISpotAvailabilityService
     {
         private readonly ISpotAvailabilityRepository _availabilityRepo;
         private readonly IParkingSpotRepository _spotRepo;           // ← תיקון 4

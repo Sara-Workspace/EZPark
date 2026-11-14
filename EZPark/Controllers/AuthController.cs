@@ -1,6 +1,6 @@
-﻿using BLL;
-using DTO;
+﻿using BLL.Interfaces;
 using BLL.Services;
+using DTO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Parking.Controllers
@@ -9,13 +9,13 @@ namespace Parking.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly OwnerService _ownerService;
-        private readonly DriverService _driverService;
+        private readonly IOwnerService _ownerService;      // ממשק במקום המחלקה עצמה
+        private readonly IDriverService _driverService;    // ממשק במקום המחלקה עצמה
         private readonly ITokenService _tokenService;
 
         public AuthController(
-            OwnerService ownerService,
-            DriverService driverService,
+            IOwnerService ownerService,
+            IDriverService driverService,
             ITokenService tokenService)
         {
             _ownerService = ownerService;
