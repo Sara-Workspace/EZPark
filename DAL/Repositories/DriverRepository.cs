@@ -24,7 +24,9 @@ namespace DAL.Repositories
 
         public Driver? GetDriverById(int id)
         {
-            return _context.Drivers.Find(id);
+            return _context.Drivers
+                .Include(d => d.User)            // ← נוסף
+                .FirstOrDefault(d => d.DriverID == id);
         }
 
         public void AddDriver(Driver driver)
@@ -48,6 +50,7 @@ namespace DAL.Repositories
         public Driver? GetDriverByEmail(string email)
         {
             return _context.Drivers
+                .Include(d => d.User)            // ← נוסף
                 .Include(d => d.Reservations)
                 .FirstOrDefault(d => d.User.Email == email);
         }

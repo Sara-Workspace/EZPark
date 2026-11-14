@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DTO
+﻿namespace DTO
 {
     public class ReservationCreateDTO
     {
@@ -12,6 +6,6 @@ namespace DTO
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public bool UseCharging { get; set; }
-        public int DriverId { get; set; }
+        // ← תיקון 5: אין כאן DriverId. הנהג נלקח מהטוקן
     }
 }

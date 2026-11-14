@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using BLL.Services;
+﻿using BLL.Services;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Parking.Extensions;                    // ← תיקון 4: בשביל User.GetUserId()
 
 namespace Parking.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ReviewsController : ControllerBase
     {
         private readonly ReviewService _reviewService;
@@ -15,6 +18,7 @@ namespace Parking.Controllers
             _reviewService = reviewService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult<List<ReviewDTO>> GetAllReviews()
         {
@@ -22,6 +26,7 @@ namespace Parking.Controllers
             return Ok(reviews);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public ActionResult<ReviewDTO> GetReviewById(int id)
         {
@@ -33,6 +38,7 @@ namespace Parking.Controllers
             return Ok(review);
         }
 
+        [AllowAnonymous]
         [HttpGet("spot/{spotId}")]
         public ActionResult<List<ReviewDTO>> GetReviewsBySpotId(int spotId)
         {
@@ -40,6 +46,7 @@ namespace Parking.Controllers
             return Ok(reviews);
         }
 
+        [AllowAnonymous]
         [HttpGet("spot/{spotId}/average-rating")]
         public ActionResult<double> GetAverageRatingBySpotId(int spotId)
         {
@@ -47,6 +54,7 @@ namespace Parking.Controllers
             return Ok(average);
         }
 
+        [Authorize(Roles = "Driver")]
         [HttpPost]
         public ActionResult<ReviewDTO> CreateReview([FromBody] ReviewCreateDTO dto)
         {
@@ -55,15 +63,21 @@ namespace Parking.Controllers
                 return BadRequest(ModelState);
             }
 
-            var createdReview = _reviewService.CreateReview(dto);
-            // שים לב: אם ב-ReviewDTO שדה המזהה הוא ReviewID או Id, ודא שהוא תואם:
+            // ← תיקון 4: מזהה הנהג מהטוקן
+            var createdReview = _reviewService.CreateReview(dto, User.GetUserId());
+            if (createdReview == null)
+            {
+                return NotFound("Reservation not found.");
+            }
             return CreatedAtAction(nameof(GetReviewById), new { id = createdReview.ReviewID }, createdReview);
         }
 
+        [Authorize(Roles = "Driver")]
         [HttpDelete("{id}")]
         public IActionResult DeleteReview(int id)
         {
-            var success = _reviewService.DeleteReview(id);
+            // ← תיקון 4: מוחקים רק אם הביקורת של הנהג המחובר
+            var success = _reviewService.DeleteReview(id, User.GetUserId());
             if (!success)
             {
                 return NotFound($"Review with ID {id} not found.");

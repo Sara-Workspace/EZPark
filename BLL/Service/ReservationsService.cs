@@ -30,9 +30,11 @@ namespace BLL.Services
         }
 
         // לוגיקה עסקית: הגדרת תאריך יצירה, סטטוס ממתין ואתחול מחיר סופי לפני חישוב
-        public ReservationDTO CreateReservation(ReservationCreateDTO dto)
+        // ← תיקון 5: הנהג מגיע כפרמטר (מהטוקן), לא מה-DTO
+        public ReservationDTO CreateReservation(ReservationCreateDTO dto, int driverId)
         {
             var reservation = _mapper.Map<Reservations>(dto);
+            reservation.DriverID = driverId;    // ← תיקון 5
             reservation.CreatedAt = DateTime.Now;
             reservation.Status = "Pending";
             reservation.TotalPrice = 0; // יחושב בהמשך בלוגיקה מתקדמת
