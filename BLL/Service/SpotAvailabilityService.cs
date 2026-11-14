@@ -41,6 +41,10 @@ namespace BLL.Services
         // מוסיפים זמינות רק לחניה של בעל החניה המחובר
         public SpotAvailabilityDTO CreateSpotAvailability(SpotAvailabilityCreateDTO dto, int ownerId)
         {
+            // כלל עסקי: סיום אחרי התחלה - השומר מחזיר 400
+            if (dto.EndTime <= dto.StartTime)
+                throw new BusinessRuleException("שעת הסיום חייבת להיות אחרי שעת ההתחלה.");
+
             // החניה לא קיימת או לא שלו - אותה תשובה (404)
             var spot = _spotRepo.GetOwnedSpot(dto.SpotID, ownerId)
                 ?? throw new NotFoundException($"חניה מספר {dto.SpotID} לא נמצאה.");
