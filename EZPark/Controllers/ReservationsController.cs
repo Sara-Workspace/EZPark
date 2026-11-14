@@ -1,13 +1,13 @@
-﻿using BLL.Services;
+﻿using BLL.Exceptions;
 using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Parking.Extensions;
 
 namespace Parking.Controllers
 {
+    // אין כאן בדיקות null: אם ההזמנה לא נמצאה, הסרוויס זורק שגיאה וה-GlobalExceptionFilter מחזיר 404
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -24,24 +24,20 @@ namespace Parking.Controllers
         [HttpGet]
         public ActionResult<List<ReservationDTO>> GetAllReservations()
         {
-            var reservations = _reservationsService.GetAllReservations();
-            return Ok(reservations);
+            return Ok(_reservationsService.GetAllReservations());
         }
 
         [HttpGet("{id}")]
         public ActionResult<ReservationDTO> GetReservationById(int id)
         {
             var reservation = _reservationsService.GetReservationById(id);
-            if (reservation == null)
-            {
-                return NotFound($"Reservation with ID {id} not found.");
-            }
 
-            // תיקון 4: רק הנהג שהזמין, או מנהל
+            // רק הנהג שהזמין, או מנהל.
+            // הזמנה של מישהו אחר - עונים "לא נמצאה" (404), כדי לא לגלות שהיא קיימת
             bool isMine = User.IsInRole("Driver") && reservation.DriverID == User.GetUserId();
             if (!isMine && !User.IsInRole("Admin"))
             {
-                return NotFound($"Reservation with ID {id} not found.");
+                throw new NotFoundException($"הזמנה מספר {id} לא נמצאה.");
             }
 
             return Ok(reservation);
@@ -57,20 +53,15 @@ namespace Parking.Controllers
                 return Forbid();
             }
 
-            var reservations = _reservationsService.GetReservationsByDriverId(driverId);
-            return Ok(reservations);
+            return Ok(_reservationsService.GetReservationsByDriverId(driverId));
         }
 
         [Authorize(Roles = "Driver")]
         [HttpPost]
         public ActionResult<ReservationDTO> CreateReservation([FromBody] ReservationCreateDTO dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // ← תיקון 5: מזהה הנהג מהטוקן, מועבר כפרמטר
+            // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
+            // מזהה הנהג מגיע מהטוקן, ומועבר כפרמטר
             var createdReservation = _reservationsService.CreateReservation(dto, User.GetUserId());
             return CreatedAtAction(nameof(GetReservationById), new { id = createdReservation.ReservationID }, createdReservation);
         }
