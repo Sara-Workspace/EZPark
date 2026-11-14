@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BLL.Exceptions;
 using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
@@ -6,15 +7,15 @@ using DTO;
 
 namespace BLL.Services
 {
-    public class SpotAvailabilityService:ISpotAvailabilityService
+    public class SpotAvailabilityService : ISpotAvailabilityService
     {
         private readonly ISpotAvailabilityRepository _availabilityRepo;
-        private readonly IParkingSpotRepository _spotRepo;           // ← תיקון 4
+        private readonly IParkingSpotRepository _spotRepo;
         private readonly IMapper _mapper;
 
         public SpotAvailabilityService(
             ISpotAvailabilityRepository availabilityRepo,
-            IParkingSpotRepository spotRepo,                         // ← תיקון 4
+            IParkingSpotRepository spotRepo,
             IMapper mapper)
         {
             _availabilityRepo = availabilityRepo;
@@ -28,18 +29,21 @@ namespace BLL.Services
             return _mapper.Map<List<SpotAvailabilityDTO>>(availabilities);
         }
 
-        public SpotAvailabilityDTO? GetSpotAvailabilityById(int id)
+        public SpotAvailabilityDTO GetSpotAvailabilityById(int id)
         {
-            var availability = _availabilityRepo.GetSpotAvailabilityById(id);
-            if (availability == null) return null;
+            // אם הזמינות לא קיימת - זורקים שגיאה, והשומר (GlobalExceptionFilter) מחזיר 404
+            var availability = _availabilityRepo.GetSpotAvailabilityById(id)
+                ?? throw new NotFoundException($"זמינות מספר {id} לא נמצאה.");
+
             return _mapper.Map<SpotAvailabilityDTO>(availability);
         }
 
-        // ← תיקון 4: מוסיפים זמינות רק לחניה של בעל החניה המחובר
-        public SpotAvailabilityDTO? CreateSpotAvailability(SpotAvailabilityCreateDTO dto, int ownerId)
+        // מוסיפים זמינות רק לחניה של בעל החניה המחובר
+        public SpotAvailabilityDTO CreateSpotAvailability(SpotAvailabilityCreateDTO dto, int ownerId)
         {
-            var spot = _spotRepo.GetOwnedSpot(dto.SpotID, ownerId);
-            if (spot == null) return null;   // החניה לא קיימת, או לא שלו
+            // החניה לא קיימת או לא שלו - אותה תשובה (404)
+            var spot = _spotRepo.GetOwnedSpot(dto.SpotID, ownerId)
+                ?? throw new NotFoundException($"חניה מספר {dto.SpotID} לא נמצאה.");
 
             var availability = _mapper.Map<SpotAvailability>(dto);
             availability.IsBooked = false;
@@ -48,10 +52,10 @@ namespace BLL.Services
             return _mapper.Map<SpotAvailabilityDTO>(availability);
         }
 
-        public SpotAvailabilityDTO? UpdateSpotAvailability(int id, SpotAvailabilityDTO dto)
+        public SpotAvailabilityDTO UpdateSpotAvailability(int id, SpotAvailabilityDTO dto)
         {
-            var availability = _availabilityRepo.GetSpotAvailabilityById(id);
-            if (availability == null) return null;
+            var availability = _availabilityRepo.GetSpotAvailabilityById(id)
+                ?? throw new NotFoundException($"זמינות מספר {id} לא נמצאה.");
 
             _mapper.Map(dto, availability);
             _availabilityRepo.UpdateSpotAvailability(availability);
@@ -59,17 +63,17 @@ namespace BLL.Services
             return _mapper.Map<SpotAvailabilityDTO>(availability);
         }
 
-        // ← תיקון 4: מוחקים זמינות רק מחניה של בעל החניה המחובר
-        public bool DeleteSpotAvailability(int id, int ownerId)
+        // מוחקים זמינות רק מחניה של בעל החניה המחובר
+        public void DeleteSpotAvailability(int id, int ownerId)
         {
-            var availability = _availabilityRepo.GetSpotAvailabilityById(id);
-            if (availability == null) return false;
+            var availability = _availabilityRepo.GetSpotAvailabilityById(id)
+                ?? throw new NotFoundException($"זמינות מספר {id} לא נמצאה.");
 
-            var spot = _spotRepo.GetOwnedSpot(availability.SpotId, ownerId);
-            if (spot == null) return false;   // החניה לא שלו
+            // החניה לא שלו - עונים "לא נמצאה", כדי לא לגלות שהיא קיימת
+            var spot = _spotRepo.GetOwnedSpot(availability.SpotId, ownerId)
+                ?? throw new NotFoundException($"זמינות מספר {id} לא נמצאה.");
 
             _availabilityRepo.DeleteSpotAvailability(availability);
-            return true;
         }
 
         public List<SpotAvailabilityDTO> GetAvailabilityBySpotId(int spotId)

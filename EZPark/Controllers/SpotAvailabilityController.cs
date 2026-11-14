@@ -1,12 +1,12 @@
-﻿using BLL.Services;
-using BLL.Interfaces;
+﻿using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Parking.Extensions;                    // ← תיקון 4: בשביל User.GetUserId()
+using Parking.Extensions;                    // בשביל User.GetUserId()
 
 namespace Parking.Controllers
 {
+    // אין כאן בדיקות null: אם משהו לא נמצא, הסרוויס זורק שגיאה וה-GlobalExceptionFilter מחזיר 404
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -23,45 +23,30 @@ namespace Parking.Controllers
         [HttpGet]
         public ActionResult<List<SpotAvailabilityDTO>> GetAllSpotAvailabilities()
         {
-            var list = _availabilityService.GetAllSpotAvailabilities();
-            return Ok(list);
+            return Ok(_availabilityService.GetAllSpotAvailabilities());
         }
 
         [AllowAnonymous]
         [HttpGet("{id}")]
         public ActionResult<SpotAvailabilityDTO> GetSpotAvailabilityById(int id)
         {
-            var item = _availabilityService.GetSpotAvailabilityById(id);
-            if (item == null)
-            {
-                return NotFound($"Availability record with ID {id} not found.");
-            }
-            return Ok(item);
+            return Ok(_availabilityService.GetSpotAvailabilityById(id));
         }
 
         [AllowAnonymous]
         [HttpGet("spot/{spotId}")]
         public ActionResult<List<SpotAvailabilityDTO>> GetAvailabilityBySpotId(int spotId)
         {
-            var list = _availabilityService.GetAvailabilityBySpotId(spotId);
-            return Ok(list);
+            return Ok(_availabilityService.GetAvailabilityBySpotId(spotId));
         }
 
         [Authorize(Roles = "Owner")]
         [HttpPost]
         public ActionResult<SpotAvailabilityDTO> CreateSpotAvailability([FromBody] SpotAvailabilityCreateDTO dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // ← תיקון 4: מזהה בעל החניה מהטוקן
+            // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
+            // מזהה בעל החניה מגיע מהטוקן
             var created = _availabilityService.CreateSpotAvailability(dto, User.GetUserId());
-            if (created == null)
-            {
-                return NotFound($"Parking spot with ID {dto.SpotID} not found.");
-            }
             return CreatedAtAction(nameof(GetSpotAvailabilityById), new { id = created.AvailabilityID }, created);
         }
 
@@ -69,12 +54,8 @@ namespace Parking.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteSpotAvailability(int id)
         {
-            // ← תיקון 4: מוחקים רק מחניה של בעל החניה המחובר
-            var success = _availabilityService.DeleteSpotAvailability(id, User.GetUserId());
-            if (!success)
-            {
-                return NotFound($"Availability record with ID {id} not found.");
-            }
+            // מוחקים רק מחניה של בעל החניה המחובר
+            _availabilityService.DeleteSpotAvailability(id, User.GetUserId());
             return NoContent();
         }
     }
