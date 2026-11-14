@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<!-- התחלת הגדרות הפרויקט: פרויקט רגיל של .NET -->
+
+	<PropertyGroup>
+		<!-- התחלת ההגדרות הכלליות -->
+		<TargetFramework>net9.0</TargetFramework>
+		<!-- הפרויקט רץ על .NET 9 -->
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- usings בסיסיים נוספים אוטומטית (List, DateTime...) -->
+		<Nullable>enable</Nullable>
+		<!-- מאפשר סימון ? למשתנה שיכול להיות null -->
+	</PropertyGroup>
+	<!-- סוף ההגדרות הכלליות -->
+
+	<ItemGroup>
+		<!-- רשימת ספריות חיצוניות -->
+		<PackageReference Include="AutoMapper" Version="14.0.0" />
+		<!-- ספריית ההמרות בין טבלה ל-DTO -->
+	</ItemGroup>
+	<!-- סוף רשימת הספריות -->
+
+	<ItemGroup>
+		<!-- רשימת פרויקטים ש-BLL משתמש בהם -->
+		<ProjectReference Include="..\DAL\DAL.csproj" />
+		<!-- חיבור ל-DAL: מכיר את הטבלאות -->
+		<ProjectReference Include="..\DTO\DTO.csproj" />
+		<!-- חיבור ל-DTO: מכיר את מחלקות ה-DTO -->
+	</ItemGroup>
+	<!-- סוף רשימת הפרויקטים -->
+
+	<ItemGroup>
+		<!-- מאפשר להשתמש ב-IFormFile (קובץ שהגיע מהדפדפן) -->
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+</Project>
+<!-- סוף הגדרות הפרויקט -->

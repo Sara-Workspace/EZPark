@@ -12,8 +12,8 @@ namespace DAL
         public int SpotID { get; set; }//מזהה חניה
         public DateTime StartHour { get; set; }//שעת התחלת עומס
         public DateTime EndtHour { get; set; }//שעת סיום עומס
-        public decimal PriceMulyiPlier { get; set; }//הכפלת המחיר בשעת עומס
-        public decimal EvExtraCharg { get; set; }//תוספת לטעינה
+        public decimal PriceMultiplier { get; set; }//הכפלת המחיר בשעת עומס
+        public decimal EvExtraCharge { get; set; }//תוספת לטעינה
 
 
         // Navigation Property
