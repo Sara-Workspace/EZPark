@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Parking.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,8 +20,13 @@ var imagesFolder = Path.GetFullPath(Path.Combine(
     builder.Configuration["ImagesFolder"]!));
 Directory.CreateDirectory(imagesFolder);
 
-// 2. הוספת קונטרולרים
-builder.Services.AddControllers();
+// 2. הוספת קונטרולרים + רישום השומר המרכזי לשגיאות
+// כל שגיאה שלא נתפסה באחד הקונטרולרים תגיע ל-GlobalExceptionFilter,
+// והוא יחזיר תשובה מסודרת (404 / 409 / 400 / 500) במקום קריסה
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});
 
 // 3. קריאת מחרוזת חיבור למסד הנתונים
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
