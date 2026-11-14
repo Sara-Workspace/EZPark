@@ -21,11 +21,7 @@ namespace DTO
         [Required(ErrorMessage = "טלפון הוא שדה חובה")]
         [Phone(ErrorMessage = "מספר הטלפון לא תקין")]
         public string Phone { get; set; } = string.Empty;
-<<<<<<< HEAD
-        public int? PaymentMethodID { get; set; }
-=======
 
-        public int PaymentMethodID { get; set; }
->>>>>>> 89367d3fe84d3a208dfdabdabdfacb95610d2724
+        public int? PaymentMethodID { get; set; }   // לא חובה
     }
 }
