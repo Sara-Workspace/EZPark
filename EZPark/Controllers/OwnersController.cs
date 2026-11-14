@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using BLL.Services;
+﻿using BLL.Exceptions;
 using BLL.Interfaces;
 using DTO;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Parking.Extensions;
-using BLL;
 
 namespace Parking.Controllers
 {
+    // אין כאן בדיקות null: אם בעל החניה לא נמצא, הסרוויס זורק שגיאה וה-GlobalExceptionFilter מחזיר 404
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -25,55 +25,41 @@ namespace Parking.Controllers
         [HttpGet]
         public ActionResult<List<OwnerDTO>> GetAllOwners()
         {
-            var owners = _ownerService.GetAllOwners();
-            return Ok(owners);
+            return Ok(_ownerService.GetAllOwners());
         }
 
         [HttpGet("{id}")]
         public ActionResult<OwnerDTO> GetOwnerById(int id)
         {
-            // ← תיקון 4: רק בעל החניה עצמו, או מנהל
+            // רק בעל החניה עצמו, או מנהל.
+            // מישהו אחר - עונים "לא נמצא" (404), כדי לא לגלות שהוא קיים
             bool isMe = User.IsInRole("Owner") && id == User.GetUserId();
             if (!isMe && !User.IsInRole("Admin"))
             {
-                return NotFound($"Owner with ID {id} not found.");
+                throw new NotFoundException($"בעל חניה מספר {id} לא נמצא.");
             }
 
-            var owner = _ownerService.GetOwnerById(id);
-            if (owner == null)
-            {
-                return NotFound($"Owner with ID {id} not found.");
-            }
-            return Ok(owner);
+            return Ok(_ownerService.GetOwnerById(id));
         }
 
         [HttpGet("{id}/spots")]
         public ActionResult<OwnerWithSpotsDTO> GetOwnerWithSpots(int id)
         {
-            // ← תיקון 4: רק בעל החניה עצמו, או מנהל
+            // רק בעל החניה עצמו, או מנהל
             bool isMe = User.IsInRole("Owner") && id == User.GetUserId();
             if (!isMe && !User.IsInRole("Admin"))
             {
-                return NotFound($"Owner with ID {id} not found.");
+                throw new NotFoundException($"בעל חניה מספר {id} לא נמצא.");
             }
 
-            var ownerWithSpots = _ownerService.GetOwnerWithSpots(id);
-            if (ownerWithSpots == null)
-            {
-                return NotFound($"Owner with ID {id} not found.");
-            }
-            return Ok(ownerWithSpots);
+            return Ok(_ownerService.GetOwnerWithSpots(id));
         }
 
         [AllowAnonymous]
         [HttpPost]
         public ActionResult<OwnerDTO> CreateOwner([FromBody] OwnerCreateDTO dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
             var createdOwner = _ownerService.CreateOwner(dto);
             return CreatedAtAction(nameof(GetOwnerById), new { id = createdOwner.OwnerID }, createdOwner);
         }
@@ -82,33 +68,26 @@ namespace Parking.Controllers
         [HttpPut("{id}")]
         public ActionResult<OwnerDTO> UpdateOwner(int id, [FromBody] OwnerUpdateDTO dto)
         {
+            // מותר לעדכן רק את עצמך
             if (id != User.GetUserId())
             {
                 return Forbid();
             }
 
-            var updatedOwner = _ownerService.UpdateOwner(id, dto);
-            if (updatedOwner == null)
-            {
-                return NotFound($"Owner with ID {id} not found.");
-            }
-            return Ok(updatedOwner);
+            return Ok(_ownerService.UpdateOwner(id, dto));
         }
 
         [Authorize(Roles = "Owner")]
         [HttpDelete("{id}")]
         public IActionResult DeleteOwner(int id)
         {
+            // מותר למחוק רק את עצמך
             if (id != User.GetUserId())
             {
                 return Forbid();
             }
 
-            var success = _ownerService.DeleteOwner(id);
-            if (!success)
-            {
-                return NotFound($"Owner with ID {id} not found.");
-            }
+            _ownerService.DeleteOwner(id);
             return NoContent();
         }
     }
