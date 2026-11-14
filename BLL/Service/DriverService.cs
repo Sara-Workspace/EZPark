@@ -57,25 +57,28 @@ namespace BLL
         // לוגיקה עסקית / חישובית: קביעת תאריך יצירה, איפוס יתרה התחלתית ובדיקות תקינות
         public DriverDTO CreateDriver(DriverCreateDTO dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.PasswordHash))
+            {
+                throw new ArgumentException("חובה להזין סיסמה בעת יצירת נהג חדש");
+            }
+
             var driver = new Driver
             {
                 CreditBalance = 0,
-                PaymentMethodID = dto.PaymentMethodID,
+                PaymentMethodID = dto.PaymentMethodID ?? 0,
                 User = new Users
                 {
                     FirstName = dto.FirstName,
                     LastName = dto.LastName,
                     Email = dto.Email,
                     Phone = dto.Phone,
+                    IsAdmin = false,
                     CreatedAt = DateTime.UtcNow
                 }
             };
 
-            // הצפנת הסיסמה ברישום נהג חדש
-            if (!string.IsNullOrEmpty(dto.PasswordHash))
-            {
-                driver.User.PasswordHash = _passwordHasher.HashPassword(driver, dto.PasswordHash);
-            }
+            // הצפנת הסיסמה באמצעות ה-IPasswordHasher שכבר מוזרק למחלקה
+            driver.User.PasswordHash = _passwordHasher.HashPassword(driver, dto.PasswordHash);
 
             _driverRepo.AddDriver(driver);
 
