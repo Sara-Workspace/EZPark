@@ -1,12 +1,12 @@
-﻿using BLL.Services;
-using BLL.Interfaces;
+﻿using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Parking.Extensions;                    // ← תיקון 4: בשביל User.GetUserId()
+using Parking.Extensions;                    // בשביל User.GetUserId()
 
 namespace Parking.Controllers
 {
+    // אין כאן בדיקות null: אם ההזמנה לא נמצאה, הסרוויס זורק שגיאה וה-GlobalExceptionFilter מחזיר 404
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -23,44 +23,29 @@ namespace Parking.Controllers
         [HttpGet]
         public ActionResult<List<PaymentDTO>> GetAllPayments()
         {
-            var payments = _paymentService.GetAllPayments();
-            return Ok(payments);
+            return Ok(_paymentService.GetAllPayments());
         }
 
-        [Authorize(Roles = "Driver,Admin")]     // ← תיקון 4: רק נהג או מנהל
+        [Authorize(Roles = "Driver,Admin")]     // רק נהג או מנהל
         [HttpGet("reservation/{reservationId}")]
         public ActionResult<List<PaymentDTO>> GetPaymentsByReservationId(int reservationId)
         {
-            // ← תיקון 4: מנהל רואה הכל, נהג רק את ההזמנות שלו
+            // מנהל רואה הכל, נהג רק את ההזמנות שלו
             if (User.IsInRole("Admin"))
             {
                 return Ok(_paymentService.GetPaymentsByReservationId(reservationId));
             }
 
-            var payments = _paymentService.GetMyPaymentsByReservationId(reservationId, User.GetUserId());
-            if (payments == null)
-            {
-                return NotFound($"Reservation with ID {reservationId} not found.");
-            }
-            return Ok(payments);
+            return Ok(_paymentService.GetMyPaymentsByReservationId(reservationId, User.GetUserId()));
         }
 
         [Authorize(Roles = "Driver")]
         [HttpPost]
         public ActionResult<PaymentDTO> CreatePayment([FromBody] PaymentCreateDTO dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // ← תיקון 4: מזהה הנהג מהטוקן
-            var createdPayment = _paymentService.CreatePayment(dto, User.GetUserId());
-            if (createdPayment == null)
-            {
-                return NotFound($"Reservation with ID {dto.ReservationID} not found.");
-            }
-            return Ok(createdPayment);
+            // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
+            // מזהה הנהג מגיע מהטוקן
+            return Ok(_paymentService.CreatePayment(dto, User.GetUserId()));
         }
     }
 }

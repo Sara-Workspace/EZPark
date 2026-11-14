@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BLL.Exceptions;
 using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
@@ -6,15 +7,15 @@ using DTO;
 
 namespace BLL.Services
 {
-    public class PaymentService:IPaymentService
+    public class PaymentService : IPaymentService
     {
         private readonly IPaymentRepository _paymentRepo;
-        private readonly IReservationsRepository _reservationRepo;   // ← תיקון 4
+        private readonly IReservationsRepository _reservationRepo;
         private readonly IMapper _mapper;
 
         public PaymentService(
             IPaymentRepository paymentRepo,
-            IReservationsRepository reservationRepo,                 // ← תיקון 4
+            IReservationsRepository reservationRepo,
             IMapper mapper)
         {
             _paymentRepo = paymentRepo;
@@ -28,12 +29,13 @@ namespace BLL.Services
             return _mapper.Map<List<PaymentDTO>>(payments);
         }
 
-        // ← תיקון 4: משלמים רק על הזמנה של הנהג המחובר
-        public PaymentDTO? CreatePayment(PaymentCreateDTO dto, int driverId)
+        // משלמים רק על הזמנה של הנהג המחובר
+        public PaymentDTO CreatePayment(PaymentCreateDTO dto, int driverId)
         {
+            // ההזמנה לא קיימת או לא שלו - אותה תשובה (404), כדי לא לגלות הזמנות של אחרים
             var reservation = _reservationRepo.GetReservationById(dto.ReservationID);
             if (reservation == null || reservation.DriverID != driverId)
-                return null;   // ההזמנה לא קיימת, או לא שלו
+                throw new NotFoundException($"הזמנה מספר {dto.ReservationID} לא נמצאה.");
 
             var payment = _mapper.Map<Payment>(dto);
             payment.PaidAt = DateTime.Now;
@@ -50,12 +52,12 @@ namespace BLL.Services
             return _mapper.Map<List<PaymentDTO>>(payments);
         }
 
-        // ← תיקון 4: לנהג, רק תשלומים של הזמנה שלו
-        public List<PaymentDTO>? GetMyPaymentsByReservationId(int reservationId, int driverId)
+        // לנהג: רק תשלומים של הזמנה שלו
+        public List<PaymentDTO> GetMyPaymentsByReservationId(int reservationId, int driverId)
         {
             var reservation = _reservationRepo.GetReservationById(reservationId);
             if (reservation == null || reservation.DriverID != driverId)
-                return null;   // ההזמנה לא קיימת, או לא שלו
+                throw new NotFoundException($"הזמנה מספר {reservationId} לא נמצאה.");
 
             return GetPaymentsByReservationId(reservationId);
         }
