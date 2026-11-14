@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using DTO.Validation;
 using Microsoft.AspNetCore.Http;
 
 namespace DTO
@@ -24,6 +25,9 @@ namespace DTO
         [Range(0.01, 10000.0, ErrorMessage = "המחיר לשעה חייב להיות בין 0.01 ל-10,000")]
         public decimal BasePricePerHour { get; set; }
 
-        public IFormFile? ImageFile { get; set; } // ? = לא חובה. בצעד הבא נוסיף בדיקת סוג וגודל
+        // המדבקות שכתבנו בעצמנו (מהתיקייה DTO/Validation)
+        [AllowedExtensions(".jpg", ".jpeg", ".png", ".webp")]
+        [MaxFileSize(5)]
+        public IFormFile? ImageFile { get; set; } // ? = לא חובה
     }
 }
