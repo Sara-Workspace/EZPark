@@ -17,5 +17,7 @@ namespace DTO
         public int PaymentMethodID { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsAdmin { get; set; }
+        public int Points { get; set; }
+        public string? LicensePlate { get; set; }
     }
 }

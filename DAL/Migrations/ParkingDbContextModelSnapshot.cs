@@ -33,6 +33,9 @@ namespace DAL.Migrations
                     b.Property<decimal>("CreditBalance")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("LicensePlate")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("PaymentMethodID")
                         .HasColumnType("int");
 
@@ -329,6 +332,16 @@ namespace DAL.Migrations
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Points")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(3000);
+
+                    b.Property<DateTime>("PointsResetAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.HasKey("UserId");
 

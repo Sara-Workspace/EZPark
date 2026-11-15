@@ -76,7 +76,7 @@ namespace BLL
             var driver = new Driver
             {
                 CreditBalance = 0,
-                PaymentMethodID = dto.PaymentMethodID ?? 0,
+                //PaymentMethodID = dto.PaymentMethodID ?? 0,
                 User = new Users
                 {
                     FirstName = dto.FirstName,
@@ -122,17 +122,32 @@ namespace BLL
         }
 
         // פעולה חישובית/עסקית: טעינת ארנק דיגיטלי לנהג
+
+        // פעולה חישובית/עסקית: טעינת ארנק דיגיטלי לנהג
         public DriverDTO TopUpWallet(int driverId, decimal amount)
         {
-            // כלל עסקי: אי אפשר לטעון סכום אפס או שלילי - השומר מחזיר 400
+            // כלל עסקי: אי אפשר לטעון סכום אפס או שלילי
             if (amount <= 0)
                 throw new BusinessRuleException("סכום הטעינה חייב להיות חיובי.");
 
+            // בדיקה שהנהג קיים
             var driver = _driverRepo.GetDriverById(driverId)
                 ?? throw new NotFoundException($"נהג מספר {driverId} לא נמצא.");
 
             // חישוב עדכון היתרה
             driver.CreditBalance += amount;
+            _driverRepo.UpdateDriver(driver);
+
+            return _mapper.Map<DriverDTO>(driver);
+        }
+
+        // עדכון מספר הרישוי של הרכב הנוכחי (דורס את הקודם)
+        public DriverDTO? UpdateLicensePlate(int driverId, string licensePlate)
+        {
+            var driver = _driverRepo.GetDriverById(driverId);
+            if (driver == null) return null;
+
+            driver.LicensePlate = licensePlate.Trim();
             _driverRepo.UpdateDriver(driver);
 
             return _mapper.Map<DriverDTO>(driver);

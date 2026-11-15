@@ -100,11 +100,16 @@ namespace BLL.Services
             return _mapper.Map<ParkingSpotDTO>(spot);
         }
 
-        public ParkingSpotDTO UpdateParkingSpot(int id, ParkingSpotDTO dto, int ownerId)
+
+        public ParkingSpotDTO UpdateParkingSpot(int id, ParkingSpotDTO dto, int ownerId, bool isAdmin)
         {
-            // לא קיימת או לא שלך - אותה תשובה (404), כדי לא לגלות חניות של אחרים
-            var spot = _spotRepo.GetOwnedSpot(id, ownerId)
-                ?? throw new NotFoundException($"חניה מספר {id} לא נמצאה.");
+            // מנהל יכול לעדכן כל חניה, בעל חניה יכול לעדכן רק את שלו
+            var spot = isAdmin
+                ? _spotRepo.GetParkingSpotById(id)
+                : _spotRepo.GetOwnedSpot(id, ownerId);
+
+            if (spot == null)
+                throw new NotFoundException($"חניה מספר {id} לא נמצאה.");
 
             _mapper.Map(dto, spot);
             _spotRepo.UpdateParkingSpot(spot);
@@ -112,17 +117,23 @@ namespace BLL.Services
             return _mapper.Map<ParkingSpotDTO>(spot);
         }
 
-        public void DeleteParkingSpot(int id, int ownerId)
+        public void DeleteParkingSpot(int id, int ownerId, bool isAdmin)
         {
-            var spot = _spotRepo.GetOwnedSpot(id, ownerId)
-                ?? throw new NotFoundException($"חניה מספר {id} לא נמצאה.");
+            // מנהל יכול למחוק כל חניה, בעל חניה יכול למחוק רק את שלו
+            var spot = isAdmin
+                ? _spotRepo.GetParkingSpotById(id)
+                : _spotRepo.GetOwnedSpot(id, ownerId);
+
+            if (spot == null)
+                throw new NotFoundException($"חניה מספר {id} לא נמצאה.");
 
             _spotRepo.DeleteParkingSpot(spot);
 
-            // מוחקים גם את קובץ התמונה, כדי שלא יישאר בתיקייה סתם
+            // מוחקים גם את קובץ התמונה
             if (spot.Image != null)
                 _imageService.Delete(spot.Image);
         }
+
 
         public List<ParkingSpotDTO> GetParkingSpotsByOwnerId(int ownerId)
         {

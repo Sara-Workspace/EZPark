@@ -11,5 +11,6 @@ namespace BLL.Interfaces
         DriverDTO UpdateDriver(int id, DriverUpdateDTO dto);                               // זורק NotFoundException אם לא נמצא
         void DeleteDriver(int id);                                                         // זורק NotFoundException אם לא נמצא
         DriverDTO TopUpWallet(int driverId, decimal amount);                               // זורק BusinessRuleException אם הסכום לא חיובי
+        DriverDTO? UpdateLicensePlate(int driverId, string licensePlate);
     }
 }

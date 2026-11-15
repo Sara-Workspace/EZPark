@@ -11,8 +11,8 @@ namespace BLL.Interfaces
         // זורק BusinessRuleException אם הכתובת לא נמצאה
         Task<ParkingSpotDTO> CreateParkingSpotAsync(ParkingSpotCreateDTO dto, int ownerId, CancellationToken ct = default);
 
-        ParkingSpotDTO UpdateParkingSpot(int id, ParkingSpotDTO dto, int ownerId);   // זורק NotFoundException אם לא נמצאה / לא שלך
-        void DeleteParkingSpot(int id, int ownerId);                                 // זורק NotFoundException אם לא נמצאה / לא שלך
+        ParkingSpotDTO UpdateParkingSpot(int id, ParkingSpotDTO dto, int ownerId, bool isAdmin);   // זורק NotFoundException אם לא נמצאה / לא שלך
+        void DeleteParkingSpot(int id, int ownerId, bool isAdmin);                                 // זורק NotFoundException אם לא נמצאה / לא שלך
         List<ParkingSpotDTO> GetParkingSpotsByOwnerId(int ownerId);
     }
 }

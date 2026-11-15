@@ -28,7 +28,7 @@ namespace Parking.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public ActionResult<ParkingSpotDTO> GetParkingSpotById(int id)
         {
             return Ok(_parkingSpotService.GetParkingSpotById(id));
@@ -57,19 +57,31 @@ namespace Parking.Controllers
             return CreatedAtAction(nameof(GetParkingSpotById), new { id = createdSpot.SpotId }, createdSpot);
         }
 
+        
         [Authorize(Roles = "Admin,Owner")]
         [HttpPut("{id}")]
         public ActionResult<ParkingSpotDTO> UpdateParkingSpot(int id, [FromBody] ParkingSpotDTO dto)
         {
-            return Ok(_parkingSpotService.UpdateParkingSpot(id, dto, User.GetUserId()));
+            var updatedSpot = _parkingSpotService.UpdateParkingSpot(
+                id,
+                dto,
+                User.GetUserId(),
+                User.IsInRole("Admin"));
+
+            return Ok(updatedSpot);
         }
 
         [Authorize(Roles = "Admin,Owner")]
         [HttpDelete("{id}")]
         public IActionResult DeleteParkingSpot(int id)
         {
-            _parkingSpotService.DeleteParkingSpot(id, User.GetUserId());
+            _parkingSpotService.DeleteParkingSpot(
+                id,
+                User.GetUserId(),
+                User.IsInRole("Admin"));
+
             return NoContent();
         }
+
     }
 }

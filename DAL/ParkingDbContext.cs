@@ -30,6 +30,14 @@ namespace DAL
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Users>()
+                 .Property(u => u.Points)
+                 .HasDefaultValue(3000);
+
+            modelBuilder.Entity<Users>()
+                .Property(u => u.PointsResetAt)
+                .HasDefaultValueSql("GETUTCDATE()");
+
             // 1. מניעת כפילות אימיילים בטבלת Users המאוחדת
             modelBuilder.Entity<Users>()
                 .HasIndex(u => u.Email)

@@ -80,6 +80,23 @@ namespace Parking.Controllers
         }
 
         [Authorize(Roles = "Driver")]
+        [HttpPut("{id}/license-plate")]
+        public ActionResult<DriverDTO> UpdateLicensePlate(int id, [FromBody] LicensePlateUpdateDTO dto)
+        {
+            if (id != User.GetUserId())
+            {
+                return Forbid();
+            }
+
+            var updated = _driverService.UpdateLicensePlate(id, dto.LicensePlate);
+            if (updated == null)
+            {
+                return NotFound($"Driver with ID {id} not found.");
+            }
+            return Ok(updated);
+        }
+
+        [Authorize(Roles = "Driver")]
         [HttpPost("{id}/topup")]
         public ActionResult<DriverDTO> TopUpWallet(int id, [FromBody] decimal amount)
         {

@@ -16,5 +16,6 @@ namespace DTO
         public string BankDetails { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public bool IsAdmin { get; set; }
+        public int Points { get; set; }
     }
 }
