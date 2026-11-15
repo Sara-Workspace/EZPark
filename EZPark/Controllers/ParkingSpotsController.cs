@@ -46,12 +46,14 @@ namespace Parking.Controllers
             return Ok(_parkingSpotService.GetParkingSpotsByOwnerId(ownerId));
         }
 
+        // async: יצירת חניה מחכה ל-API החיצוני (OpenStreetMap) כדי למצוא את המיקום
+        // CancellationToken ct: ASP.NET ממלא אותו לבד. אם המשתמש סגר את הדף, הוא "נלחץ"
         [Authorize(Roles = "Owner")]
         [HttpPost]
-        public ActionResult<ParkingSpotDTO> CreateParkingSpot([FromForm] ParkingSpotCreateDTO dto)
+        public async Task<ActionResult<ParkingSpotDTO>> CreateParkingSpot([FromForm] ParkingSpotCreateDTO dto, CancellationToken ct)
         {
             // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
-            var createdSpot = _parkingSpotService.CreateParkingSpot(dto, User.GetUserId());
+            var createdSpot = await _parkingSpotService.CreateParkingSpotAsync(dto, User.GetUserId(), ct);
             return CreatedAtAction(nameof(GetParkingSpotById), new { id = createdSpot.SpotId }, createdSpot);
         }
 

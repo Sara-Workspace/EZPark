@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BLL.Exceptions;
+using BLL.Geocoding;
 using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
@@ -11,13 +12,19 @@ namespace BLL.Services
     {
         private readonly IParkingSpotRepository _spotRepo;
         private readonly IMapper _mapper;
-        private readonly IImageService _imageService; // שירות התמונות
+        private readonly IImageService _imageService;   // שירות התמונות
+        private readonly IGeocodingService _geocoding;  // חדש: שירות ההמרה מכתובת למיקום (ה-API החיצוני)
 
-        public ParkingSpotService(IParkingSpotRepository spotRepo, IMapper mapper, IImageService imageService)
+        public ParkingSpotService(
+            IParkingSpotRepository spotRepo,
+            IMapper mapper,
+            IImageService imageService,
+            IGeocodingService geocoding)
         {
             _spotRepo = spotRepo;
             _mapper = mapper;
             _imageService = imageService;
+            _geocoding = geocoding;
         }
 
         public List<ParkingSpotDTO> GetAllParkingSpots()
@@ -35,18 +42,48 @@ namespace BLL.Services
             return _mapper.Map<ParkingSpotDTO>(spot);
         }
 
-        // לוגיקה עסקית: הגדרת חניה כפעילה כברירת מחדל בעת יצירה
-        public ParkingSpotDTO CreateParkingSpot(ParkingSpotCreateDTO dto, int ownerId)
+        // יצירת חניה חדשה.
+        // async = הפעולה מחכה ל-API חיצוני (OpenStreetMap), ולכן היא "לוקחת זמן"
+        public async Task<ParkingSpotDTO> CreateParkingSpotAsync(ParkingSpotCreateDTO dto, int ownerId, CancellationToken ct = default)
         {
+            // ===== 1. מוצאים את המיקום (לפני ששומרים תמונה, כדי לא לשמור קובץ לחניה שלא תישמר) =====
+            double latitude;
+            double longitude;
+
+            if (dto.Latitude.HasValue && dto.Longitude.HasValue)
+            {
+                // בעל החניה שלח מיקום בעצמו (למשל סימן על המפה) - משתמשים בו, בלי לשאול את OpenStreetMap
+                latitude = dto.Latitude.Value;
+                longitude = dto.Longitude.Value;
+            }
+            else if (dto.Latitude.HasValue || dto.Longitude.HasValue)
+            {
+                // נשלח רק אחד מהשניים - זה לא מספיק כדי לדעת איפה החניה
+                throw new BusinessRuleException("יש למלא גם קו רוחב וגם קו אורך, או להשאיר את שניהם ריקים.");
+            }
+            else
+            {
+                // לא נשלח מיקום - שואלים את ה-API החיצוני לפי הכתובת
+                var location = await _geocoding.GetLocationAsync(dto.Address, dto.City, ct)
+                    ?? throw new BusinessRuleException("לא הצלחנו למצוא את הכתובת. בדקו שהיא נכונה, או סמנו את המיקום על המפה.");
+
+                latitude = location.Latitude;
+                longitude = location.Longitude;
+            }
+
+            // ===== 2. בונים את החניה =====
             var spot = _mapper.Map<ParkingSpots>(dto);
             spot.OwnerId = ownerId;
             spot.IsActive = true;
+            spot.Latitude = latitude;
+            spot.Longitude = longitude;
 
-            // אם הגיעה תמונה - שירות התמונות שומר אותה ומחזיר את השם
+            // ===== 3. שומרים תמונה (אם יש) =====
             // (אם הקובץ לא תקין, הוא זורק ArgumentException והשומר מחזיר 400)
             if (dto.ImageFile != null)
                 spot.Image = _imageService.Save(dto.ImageFile);
 
+            // ===== 4. שומרים במסד =====
             try
             {
                 _spotRepo.AddParkingSpot(spot);
