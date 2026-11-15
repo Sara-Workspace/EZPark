@@ -1,6 +1,7 @@
 ﻿using BLL;
 using BLL.Services;
 using BLL.Interfaces;
+using BLL.Geocoding;
 using DAL;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +62,16 @@ builder.Services.AddScoped<ISpotAvailabilityService, SpotAvailabilityService>();
 builder.Services.AddScoped<IDynamicPricingService, DynamicPricingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
+
+// 6א. API חיצוני: המרת כתובת למיקום (Geocoding) של OpenStreetMap
+//     AddHttpClient רושם את השירות ב-DI ומזריק לו HttpClient מוכן (לא יוצרים new HttpClient בעצמנו)
+builder.Services.AddHttpClient<IGeocodingService, GeocodingService>(client =>
+{
+    client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");   // הכתובת הראשית של ה-API
+    client.Timeout = TimeSpan.FromSeconds(10);                              // לא מחכים יותר מ-10 שניות
+    // חובה לפי הכללים של OpenStreetMap: להציג מי אנחנו. בלי זה הבקשה נחסמת
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("EZPark-StudentProject/1.0 (+https://github.com/Sara-Workspace/EZPark)");
+});
 
 // 7. רישום שירותי אבטחה ב-DI
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
