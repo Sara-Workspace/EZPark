@@ -13,17 +13,51 @@ namespace BLL
     public class DriverService : IDriverService
     {
         private readonly IDriverRepository _driverRepo;
+        private readonly IOwnersRepository _ownerRepo;
         private readonly IMapper _mapper;
         private readonly IPasswordHasher<Driver> _passwordHasher;
 
         public DriverService(
             IDriverRepository driverRepo,
+            IOwnersRepository ownerRepo,
             IMapper mapper,
             IPasswordHasher<Driver> passwordHasher)
         {
             _driverRepo = driverRepo;
+            _ownerRepo = ownerRepo;
             _mapper = mapper;
             _passwordHasher = passwordHasher;
+        }
+        // יוצר פרופיל נהג אם המשתמש נרשם במקור רק כבעל חניה, ומעדכן מספר רישוי נוכחי
+        public DriverDTO EnsureDriverAndSetPlate(string email, string licensePlate)
+        {
+            if (string.IsNullOrWhiteSpace(licensePlate))
+                throw new BusinessRuleException("חובה להזין מספר רישוי תקין.");
+
+            var driver = _driverRepo.GetDriverByEmail(email);
+
+            if (driver == null)
+            {
+                // המשתמש קיים במערכת כבעל חניה בלבד - נשלוף אותו וניצור לו פרופיל נהג מקושר לאותו UserId
+                var owner = _ownerRepo.GetOwnerByEmail(email)
+                    ?? throw new NotFoundException("המשתמש לא נמצא במערכת.");
+
+                driver = new Driver
+                {
+                    UserId = owner.UserId,
+                    CreditBalance = 0,
+                    LicensePlate = licensePlate.Trim()
+                };
+
+                _driverRepo.AddDriver(driver);
+            }
+            else
+            {
+                driver.LicensePlate = licensePlate.Trim();
+                _driverRepo.UpdateDriver(driver);
+            }
+
+            return _mapper.Map<DriverDTO>(driver);
         }
 
         // --- מתודת האימות להתחברות (Login) ---

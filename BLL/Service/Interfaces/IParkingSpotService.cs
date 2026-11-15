@@ -1,4 +1,5 @@
-﻿using DTO;
+﻿using DAL;
+using DTO;
 
 namespace BLL.Interfaces
 {
@@ -14,5 +15,7 @@ namespace BLL.Interfaces
         ParkingSpotDTO UpdateParkingSpot(int id, ParkingSpotDTO dto, int ownerId, bool isAdmin);   // זורק NotFoundException אם לא נמצאה / לא שלך
         void DeleteParkingSpot(int id, int ownerId, bool isAdmin);                                 // זורק NotFoundException אם לא נמצאה / לא שלך
         List<ParkingSpotDTO> GetParkingSpotsByOwnerId(int ownerId);
+        Task<ParkingSpotDTO> CreateParkingSpotAsync(ParkingSpotCreateDTO dto, string userEmail, CancellationToken ct = default);
+
     }
 }

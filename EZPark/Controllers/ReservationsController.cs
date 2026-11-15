@@ -65,5 +65,33 @@ namespace Parking.Controllers
             var createdReservation = _reservationsService.CreateReservation(dto, User.GetUserId());
             return CreatedAtAction(nameof(GetReservationById), new { id = createdReservation.ReservationID }, createdReservation);
         }
+        [HttpGet("my")]
+        public ActionResult<List<ReservationDTO>> GetMyReservations()
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            return Ok(_reservationsService.GetMyReservations(email));
+        }
+
+        [HttpPost("start/{spotId:int}")]
+        public ActionResult<ReservationDTO> StartParking(int spotId)
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            var reservation = _reservationsService.StartParking(spotId, email);
+            return Ok(reservation);
+        }
+
+        [HttpPost("{id:int}/complete")]
+        public ActionResult<ReservationDTO> CompleteParking(int id)
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            var completed = _reservationsService.CompleteParking(id, email);
+            return Ok(completed);
+        }
     }
 }
