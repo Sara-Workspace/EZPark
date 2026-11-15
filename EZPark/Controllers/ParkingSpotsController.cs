@@ -19,7 +19,7 @@ namespace Parking.Controllers
         private readonly SpotSearchService _spotSearchService;
         private readonly SpotHoldService _spotHoldService;
 
-        public ParkingSpotsController(ParkingSpotService parkingSpotService, SpotSearchService spotSearchService, SpotHoldService spotHoldService)
+        public ParkingSpotsController(IParkingSpotService parkingSpotService, SpotSearchService spotSearchService, SpotHoldService spotHoldService)
         {
             _parkingSpotService = parkingSpotService;
             _spotSearchService = spotSearchService;

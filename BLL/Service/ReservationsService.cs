@@ -123,6 +123,7 @@ namespace BLL.Services
             var reservation = new Reservations
             {
                 SpotID = spotId,
+                ParkingSpot = spot,
                 DriverID = driver.DriverID,
                 StartTime = nowUtc,
                 EndTime = nowUtc, // יעודכן ברגע שילחץ "סיום חניה"
