@@ -35,8 +35,15 @@ namespace Parking.Controllers
         [HttpGet("search")]
         public ActionResult<List<ParkingSpotSearchResultDTO>> SearchParkingSpots([FromQuery] SpotSearchRequestDTO request)
         {
-            int? userId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
-            var results = _spotSearchService.Search(request, userId);
+            // ה-Hold רשום לפי DriverID, ולכן גם החיפוש צריך להשוות לפי DriverID (ולא לפי המזהה מהטוקן)
+            int? driverId = null;
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (email != null)
+            {
+                driverId = _spotHoldService.GetDriverId(email);
+            }
+
+            var results = _spotSearchService.Search(request, driverId);
             return Ok(results);
         }
 

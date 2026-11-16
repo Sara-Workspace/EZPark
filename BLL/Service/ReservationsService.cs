@@ -109,8 +109,13 @@ namespace BLL.Services
             if (driver.User.Points <= 0)
                 throw new BusinessRuleException("נגמרו לך הנקודות למימוש לחודש זה.");
 
+            // נהג יכול לחנות במקום אחד בלבד בכל רגע
+            if (driver.Reservations.Any(r => r.Status == "Active"))
+                throw new BusinessRuleException("יש לך כבר חניה פעילה. יש לסיים אותה לפני תחילת חניה חדשה.");
+
             var spot = _spotRepo.GetParkingSpotById(spotId)
                 ?? throw new NotFoundException($"חניה מספר {spotId} לא נמצאה.");
+
 
             if (!spot.IsActive)
                 throw new BusinessRuleException("החניה אינה זמינה כרגע.");
