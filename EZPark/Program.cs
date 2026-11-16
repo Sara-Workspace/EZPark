@@ -106,7 +106,8 @@ IChatClient geminiChatClient = new OpenAIClient(new ApiKeyCredential(geminiApiKe
 builder.Services.AddChatClient(geminiChatClient)
     .UseFunctionInvocation();
 
-//     ה"מוח" של הצ'אט (BLL/Agent)
+//     ה"מוח" של הצ'אט והכלים שלו (BLL/Agent)
+builder.Services.AddScoped<ParkingTools>();
 builder.Services.AddScoped<IAgentService, AgentService>();
 
 // 7. רישום שירותי אבטחה ב-DI

@@ -3,21 +3,26 @@ using Microsoft.Extensions.AI;
 
 namespace BLL.Agent
 {
-    // ה"מוח" של הצ'אט: מכין את השיחה, שולח ל-Gemini ומחזיר את התשובה
+    // ה"מוח" של הצ'אט: מכין את השיחה, מצרף את הכלים, שולח ל-Gemini ומחזיר את התשובה
     public class AgentService : IAgentService
     {
         // ההוראות ל-AI (הודעת מערכת). רק השרת כותב אותן, הלקוח לא יכול לשנות אותן
         private const string SystemPrompt = """
             אתה עוזר חניות באתר EZPark, אתר להשכרת חניות פרטיות.
             ענה בעברית, בקצרה ובנימוס.
-            אל תמציא חניות, כתובות או מחירים. אם אין לך מידע, אמור זאת בכנות.
+            כשמבקשים חניה ליד כתובת: קודם מצא את המיקום עם FindLocationAsync, ואז חפש חניות עם SearchParkingSpots.
+            הצג רק חניות שהכלים החזירו. אל תמציא חניות, כתובות או מחירים.
+            המחירים הם בשקלים לשעה. אם לא נמצאו חניות, אמור זאת והצע להרחיב את רדיוס החיפוש.
+            אתה לא יכול להזמין חניה בעצמך. כדי להזמין, המשתמש בוחר חניה באתר.
             """;
 
-        private readonly IChatClient _chatClient;   // ה"טלפון" ל-Gemini, רשום ב-Program.cs (סעיף 6ב)
+        private readonly IChatClient _chatClient;     // ה"טלפון" ל-Gemini (Program.cs, סעיף 6ב)
+        private readonly ParkingTools _parkingTools;  // הכלים
 
-        public AgentService(IChatClient chatClient)
+        public AgentService(IChatClient chatClient, ParkingTools parkingTools)
         {
             _chatClient = chatClient;
+            _parkingTools = parkingTools;
         }
 
         // בונה את רשימת ההודעות ל-Gemini: קודם ההוראות, ואחריהן כל השיחה מהלקוח
@@ -38,10 +43,22 @@ namespace BLL.Agent
             return messages;
         }
 
+        // ה"תפריט" של הכלים שנשלח למודל.
+        // AIFunctionFactory.Create קורא את השם, ה-[Description] והפרמטרים של כל מתודה, ובונה מהם תיאור למודל
+        private ChatOptions BuildOptions() => new ChatOptions
+        {
+            Tools = new List<AITool>
+            {
+                AIFunctionFactory.Create(_parkingTools.FindLocationAsync),
+                AIFunctionFactory.Create(_parkingTools.SearchParkingSpots)
+            }
+        };
+
         public async Task<string> AskAsync(List<ChatMessageDTO> history, CancellationToken ct)
         {
-            // שולחים ל-Gemini ומחכים לתשובה (await, כי זה לוקח זמן)
-            var response = await _chatClient.GetResponseAsync(BuildMessages(history), cancellationToken: ct);
+            // שולחים ל-Gemini את השיחה + הכלים.
+            // אם המודל מבקש כלי, UseFunctionInvocation (מ-Program.cs) מריץ אותו ושולח את התוצאה בחזרה, עד שמגיעה תשובה בטקסט
+            var response = await _chatClient.GetResponseAsync(BuildMessages(history), BuildOptions(), ct);
             return response.Text;
         }
     }
