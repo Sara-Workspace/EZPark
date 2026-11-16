@@ -39,7 +39,7 @@ namespace Parking.Controllers
 
             return owner.OwnerID;
         }
-        [Authorize(Roles = "Owner")]
+       // [Authorize(Roles = "Owner")]
         [HttpGet("my")]
         public ActionResult<List<ParkingSpotDTO>> GetMyParkingSpots()
         {
@@ -109,7 +109,7 @@ namespace Parking.Controllers
         }
 
         
-        [Authorize(Roles = "Admin,Owner")]
+      //  [Authorize(Roles = "Admin,Owner")]
         [HttpPut("{id}")]
         public ActionResult<ParkingSpotDTO> UpdateParkingSpot(int id, [FromBody] ParkingSpotDTO dto)
         {
@@ -120,7 +120,7 @@ namespace Parking.Controllers
             return Ok(updatedSpot);
         }
 
-        [Authorize(Roles = "Admin,Owner")]
+       // [Authorize(Roles = "Admin,Owner")]
         [HttpDelete("{id}")]
         public IActionResult DeleteParkingSpot(int id)
         {

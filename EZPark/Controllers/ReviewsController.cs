@@ -13,10 +13,21 @@ namespace Parking.Controllers
     public class ReviewsController : ControllerBase
     {
         private readonly IReviewService _reviewService;
+        private readonly IDriverService _driverService;
 
-        public ReviewsController(IReviewService reviewService)
+        public ReviewsController(IReviewService reviewService, IDriverService driverService)
         {
             _reviewService = reviewService;
+            _driverService = driverService;
+        }
+
+        // מזהה הנהגת לפי האימייל בטוקן (ולא לפי התפקיד), כך שגם בעלת חניה ששוכרת יכולה לדרג
+        private int GetCurrentDriverId()
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            return _driverService.GetDriverByEmail(email).DriverID;
         }
 
         [AllowAnonymous]
@@ -47,22 +58,22 @@ namespace Parking.Controllers
             return Ok(_reviewService.GetAverageRatingBySpotId(spotId));
         }
 
-        [Authorize(Roles = "Driver")]
+        //[Authorize(Roles = "Driver")]
         [HttpPost]
         public ActionResult<ReviewDTO> CreateReview([FromBody] ReviewCreateDTO dto)
         {
             // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
             // מזהה הנהג מגיע מהטוקן
-            var createdReview = _reviewService.CreateReview(dto, User.GetUserId());
+            var createdReview = _reviewService.CreateReview(dto, GetCurrentDriverId());
             return CreatedAtAction(nameof(GetReviewById), new { id = createdReview.ReviewID }, createdReview);
         }
 
-        [Authorize(Roles = "Driver")]
+       // [Authorize(Roles = "Driver")]
         [HttpDelete("{id}")]
         public IActionResult DeleteReview(int id)
         {
             // מוחקים רק אם הביקורת של הנהג המחובר
-            _reviewService.DeleteReview(id, User.GetUserId());
+            _reviewService.DeleteReview(id, GetCurrentDriverId());
             return NoContent();
         }
     }
