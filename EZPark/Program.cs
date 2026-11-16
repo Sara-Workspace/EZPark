@@ -16,6 +16,7 @@ using BLL.Service;
 using System.ClientModel;
 using Microsoft.Extensions.AI;
 using OpenAI;
+using BLL.Agent;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,6 +105,9 @@ IChatClient geminiChatClient = new OpenAIClient(new ApiKeyCredential(geminiApiKe
 //     רישום ב-DI. UseFunctionInvocation = הרכיב שמריץ את הכלים שהמודל מבקש (ה"מזכירה")
 builder.Services.AddChatClient(geminiChatClient)
     .UseFunctionInvocation();
+
+//     ה"מוח" של הצ'אט (BLL/Agent)
+builder.Services.AddScoped<IAgentService, AgentService>();
 
 // 7. רישום שירותי אבטחה ב-DI
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
