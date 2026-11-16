@@ -13,6 +13,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Parking.Filters;
 using BLL.Service;
+using System.ClientModel;
+using Microsoft.Extensions.AI;
+using OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,6 +81,29 @@ builder.Services.AddHttpClient<IGeocodingService, GeocodingService>(client =>
     // חובה לפי הכללים של OpenStreetMap: להציג מי אנחנו. בלי זה הבקשה נחסמת
     client.DefaultRequestHeaders.UserAgent.ParseAdd("EZPark-StudentProject/1.0 (+https://github.com/Sara-Workspace/EZPark)");
 });
+
+// 6ב. AI Agent: חיבור ל-Gemini של גוגל (לפי המדריך של המורה)
+//     המפתח נקרא ממשתנה הסביבה Gemini__ApiKey (שני קווים תחתונים הופכים לנקודתיים)
+var geminiApiKey = builder.Configuration["Gemini:ApiKey"];
+if (string.IsNullOrWhiteSpace(geminiApiKey))
+    throw new InvalidOperationException("Gemini:ApiKey is missing. Set the environment variable Gemini__ApiKey.");
+
+//     ל-Gemini יש כתובת שמדברת באותה "שפה" כמו OpenAI, ולכן משתמשים בחבילה של OpenAI ומפנים אותה לגוגל.
+//     ה-/ בסוף הכתובת חשוב: בלעדיו הבקשות נשלחות לנתיב לא נכון
+var geminiOptions = new OpenAIClientOptions
+{
+    Endpoint = new Uri("https://generativelanguage.googleapis.com/v1beta/openai/")
+};
+
+//     המודל: Flash-Lite = הכי קל וזול, כדי שהמכסה החינמית לא תיגמר מהר.
+//     שם המודל משתנה מדי פעם. אם תתקבל שגיאת "model not found", מחליפים רק את המחרוזת
+IChatClient geminiChatClient = new OpenAIClient(new ApiKeyCredential(geminiApiKey), geminiOptions)
+    .GetChatClient("gemini-3.5-flash-lite")
+    .AsIChatClient();
+
+//     רישום ב-DI. UseFunctionInvocation = הרכיב שמריץ את הכלים שהמודל מבקש (ה"מזכירה")
+builder.Services.AddChatClient(geminiChatClient)
+    .UseFunctionInvocation();
 
 // 7. רישום שירותי אבטחה ב-DI
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
