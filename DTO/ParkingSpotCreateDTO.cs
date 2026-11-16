@@ -25,7 +25,7 @@ namespace DTO
 
         public bool EvCharger { get; set; }
 
-        [Range(0.01, 10000.0, ErrorMessage = "המחיר לשעה חייב להיות בין 0.01 ל-10,000")]
+        [Range(1, 50.0, ErrorMessage = "המחיר לשעה חייב להיות בין 1 ל-50")]
         public decimal BasePricePerHour { get; set; }
 
         // המדבקות שכתבנו בעצמנו (מהתיקייה DTO/Validation)
