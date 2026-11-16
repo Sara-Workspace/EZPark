@@ -11,20 +11,92 @@ namespace BLL.Services
     public class ParkingSpotService : IParkingSpotService
     {
         private readonly IParkingSpotRepository _spotRepo;
+        private readonly IOwnersRepository _ownerRepo;
+        private readonly IDriverRepository _driverRepo;
         private readonly IMapper _mapper;
         private readonly IImageService _imageService;   // שירות התמונות
         private readonly IGeocodingService _geocoding;  // חדש: שירות ההמרה מכתובת למיקום (ה-API החיצוני)
 
         public ParkingSpotService(
             IParkingSpotRepository spotRepo,
+            IOwnersRepository ownerRepo,
+            IDriverRepository driverRepo,
             IMapper mapper,
             IImageService imageService,
             IGeocodingService geocoding)
         {
             _spotRepo = spotRepo;
+            _ownerRepo = ownerRepo;
+            _driverRepo = driverRepo;
             _mapper = mapper;
             _imageService = imageService;
             _geocoding = geocoding;
+        }
+        public async Task<ParkingSpotDTO> CreateParkingSpotAsync(ParkingSpotCreateDTO dto, string userEmail, CancellationToken ct = default)
+        {
+            // 0. איתור או יצירת פרופיל Owner עבור המשתמש המחובר
+            var owner = _ownerRepo.GetOwnerByEmail(userEmail);
+            if (owner == null)
+            {
+                var driver = _driverRepo.GetDriverByEmail(userEmail)
+                    ?? throw new NotFoundException("המשתמש לא נמצא במערכת.");
+
+                owner = new Owners
+                {
+                    UserId = driver.UserId,
+                    BankDetails = string.Empty
+                };
+
+                _ownerRepo.AddOwner(owner);
+            }
+
+            // ===== 1. מוצאים את המיקום =====
+            double latitude;
+            double longitude;
+
+            if (dto.Latitude.HasValue && dto.Longitude.HasValue)
+            {
+                latitude = dto.Latitude.Value;
+                longitude = dto.Longitude.Value;
+            }
+            else if (dto.Latitude.HasValue || dto.Longitude.HasValue)
+            {
+                throw new BusinessRuleException("יש למלא גם קו רוחב וגם קו אורך, או להשאיר את שניהם ריקים.");
+            }
+            else
+            {
+                var location = await _geocoding.GetLocationAsync(dto.Address, dto.City, ct)
+                    ?? throw new BusinessRuleException("לא הצלחנו למצוא את הכתובת. בדקו שהיא נכונה, או סמנו את המיקום על המפה.");
+
+                latitude = location.Latitude;
+                longitude = location.Longitude;
+            }
+
+            // ===== 2. בונים את החניה =====
+            var spot = _mapper.Map<ParkingSpots>(dto);
+            spot.OwnerId = owner.OwnerID;
+            spot.IsActive = true;
+            spot.Latitude = latitude;
+            spot.Longitude = longitude;
+
+            // ===== 3. שומרים תמונה (אם יש) =====
+            if (dto.ImageFile != null)
+                spot.Image = _imageService.Save(dto.ImageFile);
+
+            // ===== 4. שומרים במסד =====
+            try
+            {
+                _spotRepo.AddParkingSpot(spot);
+            }
+            catch
+            {
+                if (spot.Image != null)
+                    _imageService.Delete(spot.Image);
+
+                throw;
+            }
+
+            return _mapper.Map<ParkingSpotDTO>(spot);
         }
 
         public List<ParkingSpotDTO> GetAllParkingSpots()

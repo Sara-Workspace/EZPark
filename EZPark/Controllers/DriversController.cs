@@ -109,5 +109,14 @@ namespace Parking.Controllers
             // סכום לא חיובי - הסרוויס זורק BusinessRuleException והשומר מחזיר 400
             return Ok(_driverService.TopUpWallet(id, amount));
         }
+        [HttpPut("my-plate")]
+        public ActionResult<DriverDTO> SetMyLicensePlate([FromBody] LicensePlateUpdateDTO dto)
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            var updated = _driverService.EnsureDriverAndSetPlate(email, dto.LicensePlate);
+            return Ok(updated);
+        }
     }
 }

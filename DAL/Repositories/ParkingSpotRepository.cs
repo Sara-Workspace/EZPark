@@ -22,6 +22,21 @@ namespace DAL.Repositories
                  .Include(p => p.Owner)
                  .ToList();
         }
+        public List<ParkingSpots> GetActiveSpotsInBox(double minLat, double maxLat, double minLng, double maxLng, List<int> excludeIds, bool evOnly)
+        {
+            var query = _context.ParkingSpots
+                .Where(s => s.IsActive
+                         && s.Latitude >= minLat && s.Latitude <= maxLat
+                         && s.Longitude >= minLng && s.Longitude <= maxLng
+                         && !excludeIds.Contains(s.SpotId));
+
+            if (evOnly)
+            {
+                query = query.Where(s => s.EvCharger);
+            }
+
+            return query.AsNoTracking().ToList();
+        }
 
         public ParkingSpots? GetParkingSpotById(int id)
         {

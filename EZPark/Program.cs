@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Parking.Filters;
+using BLL.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,11 @@ builder.Services.AddScoped<ISpotAvailabilityService, SpotAvailabilityService>();
 builder.Services.AddScoped<IDynamicPricingService, DynamicPricingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
+
+builder.Services.AddScoped<DynamicPricingService>();
+builder.Services.AddScoped<SpotSearchService>();
+builder.Services.AddSingleton<SpotHoldRegistry>();
+builder.Services.AddScoped<SpotHoldService>();
 
 // 6א. API חיצוני: המרת כתובת למיקום (Geocoding) של OpenStreetMap
 //     AddHttpClient רושם את השירות ב-DI ומזריק לו HttpClient מוכן (לא יוצרים new HttpClient בעצמנו)

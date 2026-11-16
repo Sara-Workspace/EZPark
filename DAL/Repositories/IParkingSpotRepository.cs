@@ -12,5 +12,7 @@ namespace DAL.Repositories
         void DeleteParkingSpot(ParkingSpots spot);
         List<ParkingSpots> GetParkingSpotsByOwnerId(int ownerId);
         List<ParkingSpots> GetParkingSpotsByCity(string city);
+        List<ParkingSpots> GetActiveSpotsInBox(double minLat, double maxLat, double minLng, double maxLng, List<int> excludeIds, bool evOnly);
+    
     }
 }
