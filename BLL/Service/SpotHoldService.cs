@@ -69,5 +69,10 @@ namespace BLL.Service
                 _registry.Release(spotId, driver.DriverID);
             }
         }
+        // מזהה הנהג של המשתמש (או null אם עדיין אין לו פרופיל נהג)
+        public int? GetDriverId(string userEmail)
+        {
+            return _driverRepository.GetDriverByEmail(userEmail)?.DriverID;
+        }
     }
 }
