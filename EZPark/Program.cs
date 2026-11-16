@@ -15,6 +15,7 @@ using Parking.Filters;
 using BLL.Service;
 using Microsoft.Extensions.AI;
 using BLL.Agent;
+using BLL.PlateRecognition;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,6 +103,10 @@ builder.Services.AddChatClient(geminiChatClient)
 //     ה"מוח" של הצ'אט והכלים שלו (BLL/Agent)
 builder.Services.AddScoped<ParkingTools>();
 builder.Services.AddScoped<IAgentService, AgentService>();
+
+// 6ג. זיהוי לוחיות רישוי מתמונה (BLL/PlateRecognition)
+//     משתמש באותו Gemini שרשמנו למעלה (IChatClient), רק בלי כלים: שולחים תמונה ומקבלים מספר
+builder.Services.AddScoped<IPlateRecognitionService, PlateRecognitionService>();
 
 // 7. רישום שירותי אבטחה ב-DI
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
