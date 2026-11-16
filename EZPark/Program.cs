@@ -13,6 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Parking.Filters;
 using BLL.Service;
+using Microsoft.Extensions.AI;
+using BLL.Agent;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,6 +80,28 @@ builder.Services.AddHttpClient<IGeocodingService, GeocodingService>(client =>
     // חובה לפי הכללים של OpenStreetMap: להציג מי אנחנו. בלי זה הבקשה נחסמת
     client.DefaultRequestHeaders.UserAgent.ParseAdd("EZPark-StudentProject/1.0 (+https://github.com/Sara-Workspace/EZPark)");
 });
+
+// 6ב. AI Agent: חיבור ל-Gemini של גוגל
+//     המפתח נקרא ממשתנה הסביבה Gemini__ApiKey (שני קווים תחתונים הופכים לנקודתיים)
+var geminiApiKey = builder.Configuration["Gemini:ApiKey"];
+if (string.IsNullOrWhiteSpace(geminiApiKey))
+    throw new InvalidOperationException("Gemini:ApiKey is missing. Set the environment variable Gemini__ApiKey.");
+
+//     משתמשים בחבילה הרשמית של גוגל (Google.GenAI), ולא בחבילה של OpenAI כמו במדריך:
+//     מודלי Gemini 3 ומעלה דורשים "חתימת מחשבה" (thought signature) בכל קריאה לכלי,
+//     והחבילה של OpenAI זורקת אותה בדרך. החבילה של גוגל שומרת עליה.
+//     שאר הקוד לא משתנה, כי הוא מכיר רק את IChatClient.
+//     המודל: Flash-Lite = הכי קל וזול, כדי שהמכסה החינמית לא תיגמר מהר
+IChatClient geminiChatClient = new Google.GenAI.Client(apiKey: geminiApiKey)
+    .AsIChatClient("gemini-3.5-flash-lite");
+
+//     רישום ב-DI. UseFunctionInvocation = הרכיב שמריץ את הכלים שהמודל מבקש (ה"מזכירה")
+builder.Services.AddChatClient(geminiChatClient)
+    .UseFunctionInvocation();
+
+//     ה"מוח" של הצ'אט והכלים שלו (BLL/Agent)
+builder.Services.AddScoped<ParkingTools>();
+builder.Services.AddScoped<IAgentService, AgentService>();
 
 // 7. רישום שירותי אבטחה ב-DI
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
