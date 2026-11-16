@@ -28,7 +28,14 @@ namespace Parking.Controllers
         {
             return Ok(_driverService.GetAllDrivers());
         }
+        [HttpGet("me")]
+        public ActionResult<DriverDTO> GetMe()
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
 
+            return Ok(_driverService.GetDriverByEmail(email));
+        }
         [HttpGet("{id}")]
         public ActionResult<DriverDTO> GetDriverById(int id)
         {

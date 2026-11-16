@@ -93,7 +93,13 @@ namespace BLL
 
             return _mapper.Map<DriverDTO>(driver);
         }
+        public DriverDTO GetDriverByEmail(string email)
+        {
+            var driver = _driverRepo.GetDriverByEmail(email)
+                ?? throw new NotFoundException("פרופיל נהג לא נמצא.");
 
+            return _mapper.Map<DriverDTO>(driver);
+        }
         // לוגיקה עסקית / חישובית: קביעת תאריך יצירה, איפוס יתרה התחלתית ובדיקות תקינות
         public DriverDTO CreateDriver(DriverCreateDTO dto)
         {
