@@ -13,5 +13,6 @@ namespace BLL.Interfaces
         DriverDTO TopUpWallet(int driverId, decimal amount);                               // זורק BusinessRuleException אם הסכום לא חיובי
         DriverDTO? UpdateLicensePlate(int driverId, string licensePlate);
         DriverDTO EnsureDriverAndSetPlate(string email, string licensePlate);
+        DriverDTO GetDriverByEmail(string email);                                          // זורק NotFoundException אם אין פרופיל נהג
     }
 }
