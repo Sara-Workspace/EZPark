@@ -13,9 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Parking.Filters;
 using BLL.Service;
-using System.ClientModel;
 using Microsoft.Extensions.AI;
-using OpenAI;
 using BLL.Agent;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -83,24 +81,19 @@ builder.Services.AddHttpClient<IGeocodingService, GeocodingService>(client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("EZPark-StudentProject/1.0 (+https://github.com/Sara-Workspace/EZPark)");
 });
 
-// 6ב. AI Agent: חיבור ל-Gemini של גוגל (לפי המדריך של המורה)
+// 6ב. AI Agent: חיבור ל-Gemini של גוגל
 //     המפתח נקרא ממשתנה הסביבה Gemini__ApiKey (שני קווים תחתונים הופכים לנקודתיים)
 var geminiApiKey = builder.Configuration["Gemini:ApiKey"];
 if (string.IsNullOrWhiteSpace(geminiApiKey))
     throw new InvalidOperationException("Gemini:ApiKey is missing. Set the environment variable Gemini__ApiKey.");
 
-//     ל-Gemini יש כתובת שמדברת באותה "שפה" כמו OpenAI, ולכן משתמשים בחבילה של OpenAI ומפנים אותה לגוגל.
-//     ה-/ בסוף הכתובת חשוב: בלעדיו הבקשות נשלחות לנתיב לא נכון
-var geminiOptions = new OpenAIClientOptions
-{
-    Endpoint = new Uri("https://generativelanguage.googleapis.com/v1beta/openai/")
-};
-
-//     המודל: Flash-Lite = הכי קל וזול, כדי שהמכסה החינמית לא תיגמר מהר.
-//     שם המודל משתנה מדי פעם. אם תתקבל שגיאת "model not found", מחליפים רק את המחרוזת
-IChatClient geminiChatClient = new OpenAIClient(new ApiKeyCredential(geminiApiKey), geminiOptions)
-    .GetChatClient("gemini-3.5-flash-lite")
-    .AsIChatClient();
+//     משתמשים בחבילה הרשמית של גוגל (Google.GenAI), ולא בחבילה של OpenAI כמו במדריך:
+//     מודלי Gemini 3 ומעלה דורשים "חתימת מחשבה" (thought signature) בכל קריאה לכלי,
+//     והחבילה של OpenAI זורקת אותה בדרך. החבילה של גוגל שומרת עליה.
+//     שאר הקוד לא משתנה, כי הוא מכיר רק את IChatClient.
+//     המודל: Flash-Lite = הכי קל וזול, כדי שהמכסה החינמית לא תיגמר מהר
+IChatClient geminiChatClient = new Google.GenAI.Client(apiKey: geminiApiKey)
+    .AsIChatClient("gemini-3.5-flash-lite");
 
 //     רישום ב-DI. UseFunctionInvocation = הרכיב שמריץ את הכלים שהמודל מבקש (ה"מזכירה")
 builder.Services.AddChatClient(geminiChatClient)

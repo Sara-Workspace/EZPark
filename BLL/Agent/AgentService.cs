@@ -1,4 +1,5 @@
-﻿using DTO.Chat;
+﻿using System.Runtime.CompilerServices;
+using DTO.Chat;
 using Microsoft.Extensions.AI;
 
 namespace BLL.Agent
@@ -54,12 +55,28 @@ namespace BLL.Agent
             }
         };
 
+        // שאלה ותשובה: מחכים עד שהמודל מסיים, ומחזירים הכל בבת אחת
         public async Task<string> AskAsync(List<ChatMessageDTO> history, CancellationToken ct)
         {
-            // שולחים ל-Gemini את השיחה + הכלים.
             // אם המודל מבקש כלי, UseFunctionInvocation (מ-Program.cs) מריץ אותו ושולח את התוצאה בחזרה, עד שמגיעה תשובה בטקסט
             var response = await _chatClient.GetResponseAsync(BuildMessages(history), BuildOptions(), ct);
             return response.Text;
+        }
+
+        // הזרמה: מחזירים כל חלק של התשובה ברגע שהוא מגיע מהמודל
+        // [EnumeratorCancellation] = אם המשתמש סגר את הדף, גם ההזרמה נעצרת
+        public async IAsyncEnumerable<string> AskStreamingAsync(
+            List<ChatMessageDTO> history,
+            [EnumeratorCancellation] CancellationToken ct)
+        {
+            var updates = _chatClient.GetStreamingResponseAsync(BuildMessages(history), BuildOptions(), ct);
+
+            await foreach (var update in updates)
+            {
+                // חלק מהעדכונים הם בקשות לכלים, בלי טקסט. מדלגים עליהם
+                if (!string.IsNullOrEmpty(update.Text))
+                    yield return update.Text;   // "הנה עוד חלק", ושולחים אותו מיד
+            }
         }
     }
 }
