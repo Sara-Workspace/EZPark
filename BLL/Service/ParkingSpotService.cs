@@ -10,6 +10,7 @@ namespace BLL.Services
 {
     public class ParkingSpotService : IParkingSpotService
     {
+        private const decimal MaxHourlyPrice = 50m;
         private readonly IParkingSpotRepository _spotRepo;
         private readonly IOwnersRepository _ownerRepo;
         private readonly IDriverRepository _driverRepo;
@@ -34,6 +35,8 @@ namespace BLL.Services
         }
         public async Task<ParkingSpotDTO> CreateParkingSpotAsync(ParkingSpotCreateDTO dto, string userEmail, CancellationToken ct = default)
         {
+            if (dto.BasePricePerHour <= 0 || dto.BasePricePerHour > MaxHourlyPrice)
+                throw new BusinessRuleException($"המחיר לשעה חייב להיות בין 1 ל-{MaxHourlyPrice} נקודות.");
             // 0. איתור או יצירת פרופיל Owner עבור המשתמש המחובר
             var owner = _ownerRepo.GetOwnerByEmail(userEmail);
             if (owner == null)
@@ -175,15 +178,26 @@ namespace BLL.Services
 
         public ParkingSpotDTO UpdateParkingSpot(int id, ParkingSpotDTO dto, int ownerId, bool isAdmin)
         {
-            // מנהל יכול לעדכן כל חניה, בעל חניה יכול לעדכן רק את שלו
+            if (dto.BasePricePerHour <= 0 || dto.BasePricePerHour > MaxHourlyPrice)
+                throw new BusinessRuleException($"המחיר לשעה חייב להיות בין 1 ל-{MaxHourlyPrice} נקודות.");
+
             var spot = isAdmin
                 ? _spotRepo.GetParkingSpotById(id)
                 : _spotRepo.GetOwnedSpot(id, ownerId);
 
             if (spot == null)
-                throw new NotFoundException($"חניה מספר {id} לא נמצאה.");
+                throw new NotFoundException($"חניה מספר {id} לא נמצאה או שאין לך הרשאה לערוך אותה.");
+
+            var originalOwnerId = spot.OwnerId;
+            var originalImage = spot.Image;
 
             _mapper.Map(dto, spot);
+
+            spot.SpotId = id;
+            spot.OwnerId = originalOwnerId;
+            if (string.IsNullOrWhiteSpace(dto.Image))
+                spot.Image = originalImage;
+
             _spotRepo.UpdateParkingSpot(spot);
 
             return _mapper.Map<ParkingSpotDTO>(spot);

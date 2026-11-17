@@ -5,6 +5,7 @@ using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Parking.Extensions;
+using DAL.Repositories;
 
 namespace Parking.Controllers
 {
@@ -18,12 +19,40 @@ namespace Parking.Controllers
         private readonly IParkingSpotService _parkingSpotService;
         private readonly SpotSearchService _spotSearchService;
         private readonly SpotHoldService _spotHoldService;
+        private readonly IOwnersRepository _ownerRepo;
 
-        public ParkingSpotsController(IParkingSpotService parkingSpotService, SpotSearchService spotSearchService, SpotHoldService spotHoldService)
+        public ParkingSpotsController(IParkingSpotService parkingSpotService, SpotSearchService spotSearchService, SpotHoldService spotHoldService, IOwnersRepository ownerRepo)
         {
             _parkingSpotService = parkingSpotService;
             _spotSearchService = spotSearchService;
             _spotHoldService = spotHoldService;
+            _ownerRepo = ownerRepo;
+        }
+
+        private int GetCurrentOwnerId()
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            var owner = _ownerRepo.GetOwnerByEmail(email)
+                ?? throw new UnauthorizedAccessException("לא נמצא פרופיל בעל חניה למשתמש.");
+
+            return owner.OwnerID;
+        }
+       // [Authorize(Roles = "Owner")]
+        [HttpGet("my")]
+        public ActionResult<List<ParkingSpotDTO>> GetMyParkingSpots()
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            var owner = _ownerRepo.GetOwnerByEmail(email);
+            if (owner == null)
+            {
+                return Ok(new List<ParkingSpotDTO>());
+            }
+
+            return Ok(_parkingSpotService.GetParkingSpotsByOwnerId(owner.OwnerID));
         }
 
         [AllowAnonymous]
@@ -80,28 +109,25 @@ namespace Parking.Controllers
         }
 
         
-        [Authorize(Roles = "Admin,Owner")]
+      //  [Authorize(Roles = "Admin,Owner")]
         [HttpPut("{id}")]
         public ActionResult<ParkingSpotDTO> UpdateParkingSpot(int id, [FromBody] ParkingSpotDTO dto)
         {
-            var updatedSpot = _parkingSpotService.UpdateParkingSpot(
-                id,
-                dto,
-                User.GetUserId(),
-                User.IsInRole("Admin"));
+            var isAdmin = User.IsInRole("Admin");
+            var ownerId = isAdmin ? 0 : GetCurrentOwnerId();
 
+            var updatedSpot = _parkingSpotService.UpdateParkingSpot(id, dto, ownerId, isAdmin);
             return Ok(updatedSpot);
         }
 
-        [Authorize(Roles = "Admin,Owner")]
+       // [Authorize(Roles = "Admin,Owner")]
         [HttpDelete("{id}")]
         public IActionResult DeleteParkingSpot(int id)
         {
-            _parkingSpotService.DeleteParkingSpot(
-                id,
-                User.GetUserId(),
-                User.IsInRole("Admin"));
+            var isAdmin = User.IsInRole("Admin");
+            var ownerId = isAdmin ? 0 : GetCurrentOwnerId();
 
+            _parkingSpotService.DeleteParkingSpot(id, ownerId, isAdmin);
             return NoContent();
         }
         [HttpPost("{id:int}/hold")]
