@@ -18,6 +18,11 @@ namespace BLL.Agent
         private readonly IGeocodingService _geocoding;        // ה-API החיצוני (OpenStreetMap)
         private readonly SpotSearchService _spotSearch;       // חיפוש החניות במסד
 
+        // החניות שהכלי מצא בפעם האחרונה בשאלה הנוכחית.
+        // ChatController שולח אותן ל-React בסוף התשובה, כדי להציג כפתור "לפרטי החניה" לכל אחת.
+        // (ParkingTools רשום כ-Scoped, ולכן לכל בקשה יש עותק משלו, ושאלות של משתמשים שונים לא מתערבבות)
+        public List<SpotSummary> FoundSpots { get; private set; } = new();
+
         public ParkingTools(IGeocodingService geocoding, SpotSearchService spotSearch)
         {
             _geocoding = geocoding;
@@ -57,11 +62,16 @@ namespace BLL.Agent
             // 0 (או פחות) = בלי הגבלת מחיר
             decimal? maxPrice = maxPricePerHour > 0 ? (decimal)maxPricePerHour : null;
 
-            return _spotSearch.Search(request)
+            var results = _spotSearch.Search(request)
                 .Where(s => maxPrice == null || s.EffectivePricePerHour <= maxPrice)
                 .Take(5)
                 .Select(s => new SpotSummary(s.SpotId, s.Address, s.City, s.DistanceKm, s.EffectivePricePerHour, s.EvCharger))
                 .ToList();
+
+            // זוכרים מה נמצא, בשביל הכפתורים ב-React (אם המודל חיפש כמה פעמים, נשאר החיפוש האחרון)
+            FoundSpots = results;
+
+            return results;
         }
     }
 }
