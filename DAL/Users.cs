@@ -26,7 +26,11 @@ namespace DAL
         // מתי הנקודות התחדשו לאחרונה
         public DateTime PointsResetAt { get; set; } = DateTime.UtcNow;
 
-       
+        // קנסות שנצברו החודש (חנה בחניה שלא הזמין). יורדים מהנקודות של החודש הבא,
+        // כדי שנהג לא "יתחמק" מהקנס כשכבר לא נשארו לו נקודות בסוף החודש
+        public int PendingFinePoints { get; set; } = 0;
+
+
 
         // פרופילים מקושרים (יכולים להיות null אם המשתמש הוא רק בתפקיד אחד)
         public Driver? Driver { get; set; }

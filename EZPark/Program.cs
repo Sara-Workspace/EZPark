@@ -16,6 +16,7 @@ using BLL.Service;
 using Microsoft.Extensions.AI;
 using BLL.Agent;
 using BLL.PlateRecognition;
+using BLL.SpotCheck;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,7 @@ builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IReviewsRepository, ReviewsRepository>();
 builder.Services.AddScoped<ISpotAvailabilityRepository, SpotAvailabilityRepository>();
 builder.Services.AddScoped<IDynamicPricingRulesRepository, DynamicPricingRulesRepository>();
+builder.Services.AddScoped<ISpotChecksRepository, SpotChecksRepository>();
 
 // 6. רישום ה-Services ל-DI דרך הממשקים (Interfaces)
 builder.Services.AddScoped<IDriverService, DriverService>();
@@ -107,6 +109,13 @@ builder.Services.AddScoped<IAgentService, AgentService>();
 // 6ג. זיהוי לוחיות רישוי מתמונה (BLL/PlateRecognition)
 //     משתמש באותו Gemini שרשמנו למעלה (IChatClient), רק בלי כלים: שולחים תמונה ומקבלים מספר
 builder.Services.AddScoped<IPlateRecognitionService, PlateRecognitionService>();
+
+// 6ד. בדיקת חניה תפוסה + מצלמה מדומה (BLL/SpotCheck)
+//     תמונות המצלמה נשמרות בתיקייה נפרדת, ליד תיקיית Images.
+//     בכוונה לא בתוך Images: התמונות שם פתוחות לכולם בכתובת /images, ותמונות של לוחיות רישוי הן מידע פרטי
+var camerasFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "../CameraSnapshots"));
+builder.Services.AddSingleton<ICameraService>(new CameraService(camerasFolder));
+builder.Services.AddScoped<ISpotCheckService, SpotCheckService>();
 
 // 7. רישום שירותי אבטחה ב-DI
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();

@@ -197,12 +197,14 @@ namespace BLL.Services
             return _mapper.Map<ReservationDTO>(reservation);
         }
 
-        // חידוש 3,000 נקודות אם עבר חודש מאז החידוש האחרון
+        // חידוש 3,000 נקודות אם עבר חודש מאז החידוש האחרון.
+        // קנסות שנצברו בחודש הקודם (PendingFinePoints) יורדים מהנקודות החדשות, ואז מתאפסים
         private void RefreshMonthlyPointsIfNeeded(Driver driver)
         {
             if (driver.User != null && driver.User.PointsResetAt.AddMonths(1) <= DateTime.UtcNow)
             {
-                driver.User.Points = 3000;
+                driver.User.Points = Math.Max(0, 3000 - driver.User.PendingFinePoints);
+                driver.User.PendingFinePoints = 0;
                 driver.User.PointsResetAt = DateTime.UtcNow;
                 _driverRepo.UpdateDriver(driver);
             }

@@ -299,6 +299,53 @@ namespace DAL.Migrations
                     b.ToTable("SpotAvailability");
                 });
 
+            modelBuilder.Entity("DAL.SpotChecks", b =>
+                {
+                    b.Property<int>("SpotCheckId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SpotCheckId"));
+
+                    b.Property<DateTime>("CheckedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FinePoints")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FinedUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("RequestedByEmail")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("SpotId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SpotCheckId");
+
+                    b.HasIndex("SpotId");
+
+                    b.ToTable("SpotChecks");
+                });
+
             modelBuilder.Entity("DAL.Users", b =>
                 {
                     b.Property<int>("UserId")
@@ -328,6 +375,9 @@ namespace DAL.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PendingFinePoints")
+                        .HasColumnType("int");
 
                     b.Property<string>("Phone")
                         .IsRequired()
@@ -457,6 +507,17 @@ namespace DAL.Migrations
                     b.HasOne("DAL.ParkingSpots", "ParkingSpot")
                         .WithMany()
                         .HasForeignKey("ParkingSpotSpotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ParkingSpot");
+                });
+
+            modelBuilder.Entity("DAL.SpotChecks", b =>
+                {
+                    b.HasOne("DAL.ParkingSpots", "ParkingSpot")
+                        .WithMany()
+                        .HasForeignKey("SpotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

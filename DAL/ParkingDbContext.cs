@@ -25,6 +25,7 @@ namespace DAL
         public DbSet<SpotAvailability> SpotAvailability { get; set; }
         public DbSet<DynamicPricingRules> DynamicPricingRules { get; set; }
         public DbSet<Payment> Payment { get; set; }
+        public DbSet<SpotChecks> SpotChecks { get; set; }   // בדיקות חניה (לוחיות רישוי)
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,6 +64,14 @@ namespace DAL
                 .WithMany()
                 .HasForeignKey(r => r.ReservationId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            // 5. בדיקות חניה: כל בדיקה שייכת לחניה אחת.
+            //    כותבים במפורש ש-SpotId הוא המפתח הזר, אחרת EF ממציא עמודה נסתרת (ParkingSpotSpotId)
+            modelBuilder.Entity<SpotChecks>()
+                .HasOne(c => c.ParkingSpot)
+                .WithMany()
+                .HasForeignKey(c => c.SpotId)
+                .OnDelete(DeleteBehavior.Cascade);   // מוחקים חניה ← נמחקות גם הבדיקות שלה
         }
     }
 }

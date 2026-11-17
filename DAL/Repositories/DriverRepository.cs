@@ -67,5 +67,16 @@ namespace DAL.Repositories
         {
             return _context.Users.Any(u => u.Email == email);
         }
+
+        // מחפש נהג לפי מספר רישוי.
+        // נהגים מקלידים "12-345-67" או "12 345 67", אז לפני ההשוואה מורידים מקפים ורווחים.
+        // Replace מתורגם ל-REPLACE של SQL, כך שהחיפוש קורה במסד ולא בזיכרון
+        public Driver? GetDriverByLicensePlate(string digitsOnly)
+        {
+            return _context.Drivers
+                .Include(d => d.User)
+                .FirstOrDefault(d => d.LicensePlate != null &&
+                    d.LicensePlate.Replace("-", "").Replace(" ", "") == digitsOnly);
+        }
     }
 }
