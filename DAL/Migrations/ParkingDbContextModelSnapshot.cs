@@ -277,24 +277,21 @@ namespace DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AvailabilityId"));
 
-                    b.Property<DateTime>("EndTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsBooked")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("ParkingSpotSpotId")
+                    b.Property<int>("DayOfWeek")
                         .HasColumnType("int");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
 
                     b.Property<int>("SpotId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
 
                     b.HasKey("AvailabilityId");
 
-                    b.HasIndex("ParkingSpotSpotId");
+                    b.HasIndex("SpotId");
 
                     b.ToTable("SpotAvailability");
                 });
@@ -506,7 +503,7 @@ namespace DAL.Migrations
                 {
                     b.HasOne("DAL.ParkingSpots", "ParkingSpot")
                         .WithMany()
-                        .HasForeignKey("ParkingSpotSpotId")
+                        .HasForeignKey("SpotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

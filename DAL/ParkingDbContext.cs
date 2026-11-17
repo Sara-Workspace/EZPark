@@ -72,6 +72,14 @@ namespace DAL
                 .WithMany()
                 .HasForeignKey(c => c.SpotId)
                 .OnDelete(DeleteBehavior.Cascade);   // מוחקים חניה ← נמחקות גם הבדיקות שלה
+
+            // 6. שעות זמינות: כל שורת זמינות שייכת לחניה אחת.
+            //    אותה בעיה כמו בסעיף 5: בלי השורה הזאת EF ממציא עמודה נסתרת (ParkingSpotSpotId)
+            modelBuilder.Entity<SpotAvailability>()
+                .HasOne(a => a.ParkingSpot)
+                .WithMany()
+                .HasForeignKey(a => a.SpotId)
+                .OnDelete(DeleteBehavior.Cascade);   // מוחקים חניה ← נמחקות גם שעות הזמינות שלה
         }
     }
 }

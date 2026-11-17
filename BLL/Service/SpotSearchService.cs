@@ -1,4 +1,5 @@
-﻿using BLL.Search;
+﻿using BLL.Interfaces;
+using BLL.Search;
 using DAL.Repositories;
 using DTO;
 
@@ -9,12 +10,14 @@ namespace BLL.Services
         private readonly IParkingSpotRepository _spotRepo;
         private readonly DynamicPricingService _pricingService;
         private readonly SpotHoldRegistry _holdRegistry;
+        private readonly ISpotOpenHoursService _openHours; // שעות הזמינות שבעל החניה קבע
 
-        public SpotSearchService(IParkingSpotRepository spotRepo, DynamicPricingService pricingService, SpotHoldRegistry holdRegistry)
+        public SpotSearchService(IParkingSpotRepository spotRepo, DynamicPricingService pricingService, SpotHoldRegistry holdRegistry, ISpotOpenHoursService openHours)
         {
             _spotRepo = spotRepo;
             _pricingService = pricingService;
             _holdRegistry = holdRegistry;
+            _openHours = openHours;
         }
 
         public List<ParkingSpotSearchResultDTO> Search(SpotSearchRequestDTO request, int? requesterUserId = null)
@@ -28,6 +31,10 @@ namespace BLL.Services
             spots = spots
                 .Where(s => !_holdRegistry.IsHeldByAnother(s.SpotId, requesterUserId))
                 .ToList();
+
+            // סינון לפי שעות הזמינות: מציגים רק חניות שפתוחות עכשיו לפי מה שבעל החניה קבע
+            // (החיפוש, המפה והבוט כולם עוברים כאן, אז כולם מקבלים את אותו סינון)
+            spots = _openHours.KeepOnlyOpenNow(spots);
 
             // שלב 2: המחיר בפועל ברגע זה (תמחור דינמי בשעות עומס)
             var now = DateTime.Now;

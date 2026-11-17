@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BLL.Exceptions;
+using BLL.Interfaces;
 using BLL.Services;
 using DAL.Repositories;
 using DTO;
@@ -16,15 +17,18 @@ namespace BLL.Service
         private readonly SpotHoldRegistry _registry;
         private readonly IParkingSpotRepository _spotRepository;
         private readonly IDriverRepository _driverRepository;
+        private readonly ISpotOpenHoursService _openHours; // שעות הזמינות שבעל החניה קבע
 
         public SpotHoldService(
             SpotHoldRegistry registry,
             IParkingSpotRepository spotRepository,
-            IDriverRepository driverRepository)
+            IDriverRepository driverRepository,
+            ISpotOpenHoursService openHours)
         {
             _registry = registry;
             _spotRepository = spotRepository;
             _driverRepository = driverRepository;
+            _openHours = openHours;
         }
 
         public SpotHoldResultDTO? HoldSpot(int spotId, string userEmail)
@@ -44,6 +48,13 @@ namespace BLL.Service
             if (spot == null || !spot.IsActive)
             {
                 return null;
+            }
+
+            // שומרים חניה רק בשעות שבעל החניה קבע שהיא זמינה
+            // (גם אם מישהו מנסה לעקוף את החיפוש, למשל דרך Swagger)
+            if (!_openHours.IsOpenNow(spotId))
+            {
+                throw new BusinessRuleException("החניה לא זמינה בשעה הזאת לפי השעות שבעל החניה קבע.");
             }
 
             if (!_registry.TryHold(spotId, driver.DriverID, HoldDuration, out var expiresAtUtc))

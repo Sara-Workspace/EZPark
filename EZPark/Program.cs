@@ -65,6 +65,7 @@ builder.Services.AddScoped<IReservationsService, ReservationsService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ISpotAvailabilityService, SpotAvailabilityService>();
+builder.Services.AddScoped<ISpotOpenHoursService, SpotOpenHoursService>(); // "האם החניה פתוחה עכשיו?" לפי שעות הזמינות
 builder.Services.AddScoped<IDynamicPricingService, DynamicPricingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));

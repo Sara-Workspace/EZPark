@@ -49,8 +49,16 @@ namespace BLL.Services
             var spot = _spotRepo.GetOwnedSpot(dto.SpotID, ownerId)
                 ?? throw new NotFoundException($"חניה מספר {dto.SpotID} לא נמצאה.");
 
+            // כלל עסקי: אותו יום לא יכול לכלול שני חלונות שעולים אחד על השני
+            // (למשל 08:00-12:00 וגם 10:00-14:00). חפיפה = אחד מתחיל לפני שהשני נגמר
+            var overlaps = _availabilityRepo.GetAvailabilityBySpotId(dto.SpotID)
+                .Any(a => a.DayOfWeek == dto.DayOfWeek &&
+                          dto.StartTime < a.EndTime &&
+                          a.StartTime < dto.EndTime);
+            if (overlaps)
+                throw new BusinessRuleException("השעות האלה חופפות לשעות שכבר הוגדרו לאותו יום.");
+
             var availability = _mapper.Map<SpotAvailability>(dto);
-            availability.IsBooked = false;
 
             _availabilityRepo.AddSpotAvailability(availability);
             return _mapper.Map<SpotAvailabilityDTO>(availability);

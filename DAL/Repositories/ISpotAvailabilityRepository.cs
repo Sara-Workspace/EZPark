@@ -10,5 +10,6 @@ namespace DAL.Repositories
         void UpdateSpotAvailability(SpotAvailability availability);
         void DeleteSpotAvailability(SpotAvailability availability);
         List<SpotAvailability> GetAvailabilityBySpotId(int spotId);
+        List<SpotAvailability> GetAvailabilityForSpots(List<int> spotIds); // שעות הזמינות של כמה חניות בבת אחת (לחיפוש)
     }
 }

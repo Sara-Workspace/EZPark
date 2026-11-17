@@ -14,6 +14,7 @@ namespace BLL.Services
         private readonly IDriverRepository _driverRepo;
         private readonly IOwnersRepository _ownerRepo;
         private readonly SpotHoldRegistry _holdRegistry;
+        private readonly ISpotOpenHoursService _openHours; // שעות הזמינות שבעל החניה קבע
         private readonly IMapper _mapper;
 
         public ReservationsService(
@@ -22,6 +23,7 @@ namespace BLL.Services
             IDriverRepository driverRepo,
             IOwnersRepository ownerRepo,
             SpotHoldRegistry holdRegistry,
+            ISpotOpenHoursService openHours,
             IMapper mapper)
         {
             _reservationsRepo = reservationsRepo;
@@ -29,6 +31,7 @@ namespace BLL.Services
             _driverRepo = driverRepo;
             _ownerRepo = ownerRepo;
             _holdRegistry = holdRegistry;
+            _openHours = openHours;
             _mapper = mapper;
         }
 
@@ -119,6 +122,10 @@ namespace BLL.Services
 
             if (!spot.IsActive)
                 throw new BusinessRuleException("החניה אינה זמינה כרגע.");
+
+            // "חניתי" מותר רק בשעות שבעל החניה קבע שהחניה זמינה
+            if (!_openHours.IsOpenNow(spotId))
+                throw new BusinessRuleException("החניה לא זמינה בשעה הזאת לפי השעות שבעל החניה קבע.");
 
             // מוודאים שהחניה לא שמורה כרגע למישהו אחר
             if (_holdRegistry.IsHeldByAnother(spotId, driver.DriverID))

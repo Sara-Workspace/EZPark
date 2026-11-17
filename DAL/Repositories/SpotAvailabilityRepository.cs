@@ -49,7 +49,17 @@ namespace DAL.Repositories
             return _context.SpotAvailability
                 .Include(a => a.ParkingSpot)
                 .Where(a => a.SpotId == spotId)
-                .OrderBy(a => a.StartTime)
+                .OrderBy(a => a.DayOfWeek)      // קודם לפי יום (ראשון, שני...)
+                .ThenBy(a => a.StartTime)       // ובתוך אותו יום לפי שעה
+                .ToList();
+        }
+
+        // שעות הזמינות של כמה חניות בשאילתה אחת (ולא שאילתה נפרדת לכל חניה).
+        // בלי Include: בחיפוש צריך רק את היום והשעות, לא את פרטי החניה
+        public List<SpotAvailability> GetAvailabilityForSpots(List<int> spotIds)
+        {
+            return _context.SpotAvailability
+                .Where(a => spotIds.Contains(a.SpotId))
                 .ToList();
         }
     }
