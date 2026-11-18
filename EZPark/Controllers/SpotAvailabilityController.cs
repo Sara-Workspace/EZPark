@@ -2,7 +2,7 @@
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Parking.Extensions;                    // בשביל User.GetUserId()
+using System.Security.Claims;
 
 namespace Parking.Controllers
 {
@@ -13,10 +13,25 @@ namespace Parking.Controllers
     public class SpotAvailabilityController : ControllerBase
     {
         private readonly ISpotAvailabilityService _availabilityService;
+        private readonly IOwnerService _ownerService;
 
-        public SpotAvailabilityController(ISpotAvailabilityService availabilityService)
+        public SpotAvailabilityController(ISpotAvailabilityService availabilityService, IOwnerService ownerService)
         {
             _availabilityService = availabilityService;
+            _ownerService = ownerService;
+        }
+
+        // מזהה בעל החניה המחובר - לפי האימייל שבטוקן (כמו ב-ParkingSpotsController).
+        // לא לפי המספר שבטוקן: אצל משתמש שהוא גם נהג, המספר שבטוקן הוא מספר הנהג שלו
+        private int GetCurrentOwnerId()
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            var owner = _ownerService.GetOwnerByEmail(email)
+                ?? throw new UnauthorizedAccessException("לא נמצא פרופיל בעל חניה למשתמש.");
+
+            return owner.OwnerID;
         }
 
         [AllowAnonymous]
@@ -45,8 +60,8 @@ namespace Parking.Controllers
         public ActionResult<SpotAvailabilityDTO> CreateSpotAvailability([FromBody] SpotAvailabilityCreateDTO dto)
         {
             // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
-            // מזהה בעל החניה מגיע מהטוקן
-            var created = _availabilityService.CreateSpotAvailability(dto, User.GetUserId());
+            // מזהה בעל החניה מגיע מהאימייל שבטוקן
+            var created = _availabilityService.CreateSpotAvailability(dto, GetCurrentOwnerId());
             return CreatedAtAction(nameof(GetSpotAvailabilityById), new { id = created.AvailabilityID }, created);
         }
 
@@ -55,7 +70,7 @@ namespace Parking.Controllers
         public IActionResult DeleteSpotAvailability(int id)
         {
             // מוחקים רק מחניה של בעל החניה המחובר
-            _availabilityService.DeleteSpotAvailability(id, User.GetUserId());
+            _availabilityService.DeleteSpotAvailability(id, GetCurrentOwnerId());
             return NoContent();
         }
     }

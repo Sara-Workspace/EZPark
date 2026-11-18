@@ -87,7 +87,8 @@ namespace Parking.Controllers
         [HttpGet("owner/{ownerId}")]
         public ActionResult<List<ParkingSpotDTO>> GetParkingSpotsByOwnerId(int ownerId)
         {
-            if (ownerId != User.GetUserId())
+            // בודקים לפי האימייל שבטוקן (GetCurrentOwnerId), כדי שיעבוד גם למשתמש שהוא גם נהג
+            if (ownerId != GetCurrentOwnerId())
             {
                 return Forbid();
             }
