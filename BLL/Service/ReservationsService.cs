@@ -15,6 +15,7 @@ namespace BLL.Services
         private readonly IOwnersRepository _ownerRepo;
         private readonly SpotHoldRegistry _holdRegistry;
         private readonly ISpotOpenHoursService _openHours; // שעות הזמינות שבעל החניה קבע
+        private readonly IWalletService _wallet;           // 👛 הארנקים: תשלום על החניה (90% / 10%)
         private readonly IMapper _mapper;
 
         public ReservationsService(
@@ -24,6 +25,7 @@ namespace BLL.Services
             IOwnersRepository ownerRepo,
             SpotHoldRegistry holdRegistry,
             ISpotOpenHoursService openHours,
+            IWalletService wallet,
             IMapper mapper)
         {
             _reservationsRepo = reservationsRepo;
@@ -32,6 +34,7 @@ namespace BLL.Services
             _ownerRepo = ownerRepo;
             _holdRegistry = holdRegistry;
             _openHours = openHours;
+            _wallet = wallet;
             _mapper = mapper;
         }
 
@@ -107,10 +110,9 @@ namespace BLL.Services
             if (string.IsNullOrWhiteSpace(driver.LicensePlate))
                 throw new BusinessRuleException("יש להזין מספר רישוי לפני תחילת חניה.");
 
-            RefreshMonthlyPointsIfNeeded(driver);
-
-            if (driver.User.Points <= 0)
-                throw new BusinessRuleException("נגמרו לך הנקודות למימוש לחודש זה.");
+            // אין כסף בארנק (או שהוא במינוס) - קודם טוענים
+            if (driver.User.Balance <= 0)
+                throw new BusinessRuleException("אין מספיק כסף בארנק. טענו את הארנק כדי לחנות.");
 
             // נהג יכול לחנות במקום אחד בלבד בכל רגע
             if (driver.Reservations.Any(r => r.Status == "Active"))
@@ -154,7 +156,7 @@ namespace BLL.Services
             return _mapper.Map<ReservationDTO>(reservation);
         }
 
-        // לחיצה על "סיום חניה" - חישוב זמן, הורדת נקודות, זיכוי משכיר + 10% בונוס
+        // לחיצה על "סיום חניה" - חישוב זמן ותשלום מהארנק: 90% לבעל החניה, 10% לאתר
         public ReservationDTO CompleteParking(int reservationId, string userEmail)
         {
             var driver = _driverRepo.GetDriverByEmail(userEmail)
@@ -175,26 +177,17 @@ namespace BLL.Services
             var endTimeUtc = DateTime.UtcNow;
             int totalMinutes = Math.Max(1, (int)Math.Ceiling((endTimeUtc - reservation.StartTime).TotalMinutes));
 
-            // חישוב עלות בנקודות: תעריף לשעה מחולק ב-60 כפול דקות חניה (מינימום נקודה 1)
+            // חישוב העלות בשקלים: תעריף לשעה מחולק ב-60, כפול דקות החניה (מינימום 1 ₪), מעוגל לאגורות
             decimal pricePerMinute = spot.BasePricePerHour / 60m;
-            int pointsCost = Math.Max(1, (int)Math.Ceiling(totalMinutes * pricePerMinute));
+            decimal cost = Math.Max(1m, Math.Round(totalMinutes * pricePerMinute, 2, MidpointRounding.AwayFromZero));
 
-            // 1. הורדת נקודות מהשוכר + קבלת 10% רווח/החזר בנקודות לפי האפיון
-            int cashbackBonus = (int)Math.Round(pointsCost * 0.10m);
-            driver.User.Points = Math.Max(0, driver.User.Points - pointsCost) + cashbackBonus;
-            _driverRepo.UpdateDriver(driver);
-
-            // 2. זיכוי בעל החניה בנקודות שהתקבלו
+            // 1. התשלום מהארנק: הנהג משלם הכל, בעל החניה מקבל 90%, האתר 10% (הכל ב-WalletService)
             var owner = _ownerRepo.GetOwnerById(spot.OwnerId);
-            if (owner?.User != null)
-            {
-                owner.User.Points += pointsCost;
-                _ownerRepo.UpdateOwner(owner);
-            }
+            _wallet.PayForParking(driver.User, owner?.User, cost, reservation.ReservationID, spot.Address);
 
-            // 3. סגירת ההזמנה והחזרת החניה למצב פנוי (IsActive = true)
+            // 2. סגירת ההזמנה והחזרת החניה למצב פנוי (IsActive = true)
             reservation.EndTime = endTimeUtc;
-            reservation.TotalPrice = pointsCost;
+            reservation.TotalPrice = cost;
             reservation.Status = "Completed";
             _reservationsRepo.UpdateReservation(reservation);
 
@@ -202,19 +195,6 @@ namespace BLL.Services
             _spotRepo.UpdateParkingSpot(spot);
 
             return _mapper.Map<ReservationDTO>(reservation);
-        }
-
-        // חידוש 3,000 נקודות אם עבר חודש מאז החידוש האחרון.
-        // קנסות שנצברו בחודש הקודם (PendingFinePoints) יורדים מהנקודות החדשות, ואז מתאפסים
-        private void RefreshMonthlyPointsIfNeeded(Driver driver)
-        {
-            if (driver.User != null && driver.User.PointsResetAt.AddMonths(1) <= DateTime.UtcNow)
-            {
-                driver.User.Points = Math.Max(0, 3000 - driver.User.PendingFinePoints);
-                driver.User.PendingFinePoints = 0;
-                driver.User.PointsResetAt = DateTime.UtcNow;
-                _driverRepo.UpdateDriver(driver);
-            }
         }
     }
 }
