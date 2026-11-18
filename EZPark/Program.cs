@@ -204,11 +204,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 // 1. קודם כל הפניה ל-HTTPS (לפני CORS ולפני קבצים סטטיים)
 app.UseHttpsRedirection();
