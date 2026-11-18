@@ -3,7 +3,7 @@ using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Parking.Extensions;
+using System.Security.Claims;
 
 namespace Parking.Controllers
 {
@@ -21,6 +21,26 @@ namespace Parking.Controllers
             _ownerService = ownerService;
         }
 
+        // מזהה בעל החניה המחובר - לפי האימייל שבטוקן.
+        // לא לפי המספר שבטוקן: אצל משתמש שהוא גם נהג, המספר שבטוקן הוא מספר הנהג שלו.
+        // 0 = למשתמש המחובר אין פרופיל בעל חניה (אף מזהה אמיתי הוא לא 0)
+        private int GetCurrentOwnerId()
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (email == null)
+            {
+                return 0;
+            }
+
+            var owner = _ownerService.GetOwnerByEmail(email);
+            if (owner == null)
+            {
+                return 0;
+            }
+
+            return owner.OwnerID;
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<List<OwnerDTO>> GetAllOwners()
@@ -33,7 +53,7 @@ namespace Parking.Controllers
         {
             // רק בעל החניה עצמו, או מנהל.
             // מישהו אחר - עונים "לא נמצא" (404), כדי לא לגלות שהוא קיים
-            bool isMe = User.IsInRole("Owner") && id == User.GetUserId();
+            bool isMe = User.IsInRole("Owner") && id == GetCurrentOwnerId();
             if (!isMe && !User.IsInRole("Admin"))
             {
                 throw new NotFoundException($"בעל חניה מספר {id} לא נמצא.");
@@ -46,7 +66,7 @@ namespace Parking.Controllers
         public ActionResult<OwnerWithSpotsDTO> GetOwnerWithSpots(int id)
         {
             // רק בעל החניה עצמו, או מנהל
-            bool isMe = User.IsInRole("Owner") && id == User.GetUserId();
+            bool isMe = User.IsInRole("Owner") && id == GetCurrentOwnerId();
             if (!isMe && !User.IsInRole("Admin"))
             {
                 throw new NotFoundException($"בעל חניה מספר {id} לא נמצא.");
@@ -69,7 +89,7 @@ namespace Parking.Controllers
         public ActionResult<OwnerDTO> UpdateOwner(int id, [FromBody] OwnerUpdateDTO dto)
         {
             // מותר לעדכן רק את עצמך
-            if (id != User.GetUserId())
+            if (id != GetCurrentOwnerId())
             {
                 return Forbid();
             }
@@ -82,7 +102,7 @@ namespace Parking.Controllers
         public IActionResult DeleteOwner(int id)
         {
             // מותר למחוק רק את עצמך
-            if (id != User.GetUserId())
+            if (id != GetCurrentOwnerId())
             {
                 return Forbid();
             }

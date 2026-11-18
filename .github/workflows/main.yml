@@ -46,6 +46,7 @@ jobs:
             "-verb:sync",
             "-source:contentPath=$sourcePath",
             "-dest:contentPath=$($env:SITE),computerName=$computerName,userName=$($env:USER),password=$($env:PASS),authtype=Basic",
+            "-enableRule:AppOffline",
             "-allowUntrusted"
           )
           & $msdeploy $deployArgs
