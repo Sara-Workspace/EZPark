@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿
+using System.ComponentModel.DataAnnotations;
 
 namespace DTO
 {
@@ -22,6 +23,6 @@ namespace DTO
         [Phone(ErrorMessage = "מספר הטלפון לא תקין")]
         public string Phone { get; set; } = string.Empty;
 
-        public int? PaymentMethodID { get; set; }   // לא חובה
+        public int? PaymentMethodID { get; set; } // לא חובה
     }
 }

@@ -2,7 +2,7 @@ name: Build and Deploy EZPark API
 
 on:
   push:
-    branches: [ part-four]
+    branches: [ part-four, main ]
   workflow_dispatch:
 
 jobs:
@@ -18,20 +18,35 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore EZPark/EZPark.csproj
-
-      - name: Build
-        run: dotnet build EZPark/EZPark.csproj --configuration Release --no-restore
-
-      - name: Publish
-        run: dotnet publish EZPark/EZPark.csproj --configuration Release --no-build --output ./publish
+      - name: Find API project and Publish
+        shell: pwsh
+        run: |
+          $proj = Get-ChildItem -Recurse -Filter *.csproj | Where-Object { $_.Name -notmatch 'DAL|BLL|DTO|Model|Test' } | Select-Object -First 1
+          if (-not $proj) { throw "No Web API .csproj file found!" }
+          Write-Host "Building project: $($proj.FullName)"
+          dotnet restore $proj.FullName
+          dotnet build $proj.FullName --configuration Release --no-restore
+          dotnet publish $proj.FullName --configuration Release --no-build --output ./publish
 
       - name: Deploy to MonsterASP
-        uses: SamKirkland/web-deploy@v1
-        with:
-          target-url: ${{ secrets.SERVER_COMPUTER_NAME }}
-          website-name: ${{ secrets.WEBSITE_NAME }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: ./publish
+        shell: pwsh
+        env:
+          SERVER: ${{ secrets.SERVER_COMPUTER_NAME }}
+          SITE: ${{ secrets.WEBSITE_NAME }}
+          USER: ${{ secrets.SERVER_USERNAME }}
+          PASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          $msdeploy = "${env:ProgramFiles(x86)}\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          if (-not (Test-Path $msdeploy)) {
+            $msdeploy = "$env:ProgramFiles\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          }
+          $sourcePath = (Resolve-Path "./publish").Path
+          $computerName = "https://$($env:SERVER):8172/msdeploy.axd?site=$($env:SITE)"
+          $deployArgs = @(
+            "-verb:sync",
+            "-source:contentPath=$sourcePath",
+            "-dest:contentPath=$($env:SITE),computerName=$computerName,userName=$($env:USER),password=$($env:PASS),authtype=Basic",
+            "-enableRule:AppOffline",
+            "-allowUntrusted"
+          )
+          & $msdeploy $deployArgs

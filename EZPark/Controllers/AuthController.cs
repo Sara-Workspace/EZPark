@@ -34,7 +34,16 @@ namespace Parking.Controllers
             if (driver != null)
             {
                 string driverRole = driver.IsAdmin ? "Admin" : "Driver";
-                var authData = _tokenService.CreateToken(driver.DriverID, driver.Email, driverRole);
+
+                // נהג שהוסיף חניה הוא גם בעל חניה (פרופיל Owner נוצר לו אוטומטית).
+                // במקרה כזה הטוקן מקבל גם את התפקיד Owner, כדי שיוכל לנהל את החניה שלו
+                string? secondRole = null;
+                if (!driver.IsAdmin && _ownerService.GetOwnerByEmail(driver.Email) != null)
+                {
+                    secondRole = "Owner";
+                }
+
+                var authData = _tokenService.CreateToken(driver.DriverID, driver.Email, driverRole, secondRole);
 
                 return Ok(new
                 {

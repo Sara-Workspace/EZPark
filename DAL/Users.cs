@@ -20,6 +20,21 @@ namespace DAL
 
         // דגל מנהל - ברירת מחדל false
         public bool IsAdmin { get; set; } = false;
+        // נקודות לשימוש בחניה (כל משתמש חדש מקבל 3000)
+        public int Points { get; set; } = 3000;
+
+        // מתי הנקודות התחדשו לאחרונה
+        public DateTime PointsResetAt { get; set; } = DateTime.UtcNow;
+
+        // קנסות שנצברו החודש (חנה בחניה שלא הזמין). יורדים מהנקודות של החודש הבא,
+        // כדי שנהג לא "יתחמק" מהקנס כשכבר לא נשארו לו נקודות בסוף החודש
+        public int PendingFinePoints { get; set; } = 0;
+
+        // 👛 יתרת הארנק בשקלים (₪). מכאן יורד הכסף כשחונים, ולכאן נכנס כסף לבעל חניה.
+        // טוענים אותה דרך PayPal. (השדות Points / PendingFinePoints למעלה הם משיטת הנקודות הישנה, ולא בשימוש יותר)
+        public decimal Balance { get; set; } = 0;
+
+
 
         // פרופילים מקושרים (יכולים להיות null אם המשתמש הוא רק בתפקיד אחד)
         public Driver? Driver { get; set; }

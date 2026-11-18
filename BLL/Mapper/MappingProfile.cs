@@ -15,7 +15,10 @@ namespace BLL       // שייך לשכבת BLL
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
                 .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.User.Phone))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.User.CreatedAt))
-                .ForMember(dest => dest.IsAdmin, opt => opt.MapFrom(src => src.User.IsAdmin));
+                .ForMember(dest => dest.IsAdmin, opt => opt.MapFrom(src => src.User.IsAdmin))
+                .ForMember(dest => dest.IsAdmin, opt => opt.MapFrom(src => src.User.IsAdmin))
+                .ForMember(dest => dest.Points, opt => opt.MapFrom(src => src.User.Points))
+                .ForMember(dest => dest.Balance, opt => opt.MapFrom(src => src.User.Balance)); 
 
             CreateMap<DriverCreateDTO, Driver>();       // נהג חדש -> טבלה
             CreateMap<DriverUpdateDTO, Driver>();       // עדכון נהג -> טבלה
@@ -27,7 +30,10 @@ namespace BLL       // שייך לשכבת BLL
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
                 .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.User.Phone))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.User.CreatedAt))
-                .ForMember(dest => dest.IsAdmin, opt => opt.MapFrom(src => src.User.IsAdmin));
+                .ForMember(dest => dest.IsAdmin, opt => opt.MapFrom(src => src.User.IsAdmin))
+                .ForMember(dest => dest.IsAdmin, opt => opt.MapFrom(src => src.User.IsAdmin))
+                .ForMember(dest => dest.Points, opt => opt.MapFrom(src => src.User.Points))
+                .ForMember(dest => dest.Balance, opt => opt.MapFrom(src => src.User.Balance));
 
             CreateMap<Owners, OwnerWithSpotsDTO>() // בעלים + החניות שלו (כולל פרטי User)
                 .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.User.FirstName))

@@ -1,31 +1,68 @@
 ﻿// שכבת המטבח - בה כתובים כל החוקים והלוגיקה העסקית
 
 using AutoMapper;
+using BLL.Exceptions;
+using BLL.Interfaces;
 using DAL;
 using DAL.Repositories;
 using DTO;
 using Microsoft.AspNetCore.Identity;
-using BLL.Interfaces;
 
 namespace BLL
 {
-    public class DriverService:IDriverService
+    public class DriverService : IDriverService
     {
         private readonly IDriverRepository _driverRepo;
+        private readonly IOwnersRepository _ownerRepo;
         private readonly IMapper _mapper;
         private readonly IPasswordHasher<Driver> _passwordHasher;
 
         public DriverService(
             IDriverRepository driverRepo,
+            IOwnersRepository ownerRepo,
             IMapper mapper,
             IPasswordHasher<Driver> passwordHasher)
         {
             _driverRepo = driverRepo;
+            _ownerRepo = ownerRepo;
             _mapper = mapper;
             _passwordHasher = passwordHasher;
         }
+        // יוצר פרופיל נהג אם המשתמש נרשם במקור רק כבעל חניה, ומעדכן מספר רישוי נוכחי
+        public DriverDTO EnsureDriverAndSetPlate(string email, string licensePlate)
+        {
+            if (string.IsNullOrWhiteSpace(licensePlate))
+                throw new BusinessRuleException("חובה להזין מספר רישוי תקין.");
+
+            var driver = _driverRepo.GetDriverByEmail(email);
+
+            if (driver == null)
+            {
+                // המשתמש קיים במערכת כבעל חניה בלבד - נשלוף אותו וניצור לו פרופיל נהג מקושר לאותו UserId
+                var owner = _ownerRepo.GetOwnerByEmail(email)
+                    ?? throw new NotFoundException("המשתמש לא נמצא במערכת.");
+
+                driver = new Driver
+                {
+                    UserId = owner.UserId,
+                    CreditBalance = 0,
+                    LicensePlate = licensePlate.Trim()
+                };
+
+                _driverRepo.AddDriver(driver);
+            }
+            else
+            {
+                driver.LicensePlate = licensePlate.Trim();
+                _driverRepo.UpdateDriver(driver);
+            }
+
+            return _mapper.Map<DriverDTO>(driver);
+        }
 
         // --- מתודת האימות להתחברות (Login) ---
+        // כאן null זה לא שגיאה, אלא תשובה "הפרטים לא נכונים".
+        // ה-AuthController ממשיך לבדוק בעל חניה, ורק אם שניהם null מחזיר 401
         public async Task<DriverDTO?> ValidateDriverCredentialsAsync(string email, string password)
         {
             // 1. שליפת הנהג לפי דוא"ל מתוך ה-Repository
@@ -48,25 +85,38 @@ namespace BLL
             return _mapper.Map<List<DriverDTO>>(drivers);
         }
 
-        public DriverDTO? GetDriverById(int id)
+        public DriverDTO GetDriverById(int id)
         {
-            var driver = _driverRepo.GetDriverById(id);
-            if (driver == null) return null;
+            // אם הנהג לא קיים - זורקים שגיאה, והשומר (GlobalExceptionFilter) מחזיר 404
+            var driver = _driverRepo.GetDriverById(id)
+                ?? throw new NotFoundException($"נהג מספר {id} לא נמצא.");
+
             return _mapper.Map<DriverDTO>(driver);
         }
+        public DriverDTO GetDriverByEmail(string email)
+        {
+            var driver = _driverRepo.GetDriverByEmail(email)
+                ?? throw new NotFoundException("פרופיל נהג לא נמצא.");
 
+            return _mapper.Map<DriverDTO>(driver);
+        }
         // לוגיקה עסקית / חישובית: קביעת תאריך יצירה, איפוס יתרה התחלתית ובדיקות תקינות
         public DriverDTO CreateDriver(DriverCreateDTO dto)
         {
+            // ArgumentException - השומר מחזיר 400
             if (string.IsNullOrWhiteSpace(dto.PasswordHash))
             {
                 throw new ArgumentException("חובה להזין סיסמה בעת יצירת נהג חדש");
             }
 
+            // כלל עסקי: אותו מייל לא יכול להירשם פעמיים - השומר מחזיר 409
+            if (_driverRepo.EmailExists(dto.Email))
+                throw new ConflictException("כתובת המייל כבר רשומה במערכת.");
+
             var driver = new Driver
             {
                 CreditBalance = 0,
-                PaymentMethodID = dto.PaymentMethodID ?? 0,
+                //PaymentMethodID = dto.PaymentMethodID ?? 0,
                 User = new Users
                 {
                     FirstName = dto.FirstName,
@@ -86,10 +136,10 @@ namespace BLL
             return _mapper.Map<DriverDTO>(driver);
         }
 
-        public DriverDTO? UpdateDriver(int id, DriverUpdateDTO dto)
+        public DriverDTO UpdateDriver(int id, DriverUpdateDTO dto)
         {
-            var driver = _driverRepo.GetDriverById(id);
-            if (driver == null) return null;
+            var driver = _driverRepo.GetDriverById(id)
+                ?? throw new NotFoundException($"נהג מספר {id} לא נמצא.");
 
             if (driver.User != null)
             {
@@ -103,25 +153,41 @@ namespace BLL
             return _mapper.Map<DriverDTO>(driver);
         }
 
-        public bool DeleteDriver(int id)
+        public void DeleteDriver(int id)
         {
-            var driver = _driverRepo.GetDriverById(id);
-            if (driver == null) return false;
+            var driver = _driverRepo.GetDriverById(id)
+                ?? throw new NotFoundException($"נהג מספר {id} לא נמצא.");
 
             _driverRepo.DeleteDriver(driver);
-            return true;
         }
 
-        // פעולה חישובית/עסקית לדוגמה: טעינת ארנק דיגיטלי לנהג
-        public DriverDTO? TopUpWallet(int driverId, decimal amount)
+        // פעולה חישובית/עסקית: טעינת ארנק דיגיטלי לנהג
+
+        // פעולה חישובית/עסקית: טעינת ארנק דיגיטלי לנהג
+        public DriverDTO TopUpWallet(int driverId, decimal amount)
+        {
+            // כלל עסקי: אי אפשר לטעון סכום אפס או שלילי
+            if (amount <= 0)
+                throw new BusinessRuleException("סכום הטעינה חייב להיות חיובי.");
+
+            // בדיקה שהנהג קיים
+            var driver = _driverRepo.GetDriverById(driverId)
+                ?? throw new NotFoundException($"נהג מספר {driverId} לא נמצא.");
+
+            // חישוב עדכון היתרה
+            driver.CreditBalance += amount;
+            _driverRepo.UpdateDriver(driver);
+
+            return _mapper.Map<DriverDTO>(driver);
+        }
+
+        // עדכון מספר הרישוי של הרכב הנוכחי (דורס את הקודם)
+        public DriverDTO? UpdateLicensePlate(int driverId, string licensePlate)
         {
             var driver = _driverRepo.GetDriverById(driverId);
             if (driver == null) return null;
 
-            if (amount <= 0) throw new ArgumentException("סכום הטעינה חייב להיות חיובי");
-
-            // חישוב עדכון היתרה
-            driver.CreditBalance += amount;
+            driver.LicensePlate = licensePlate.Trim();
             _driverRepo.UpdateDriver(driver);
 
             return _mapper.Map<DriverDTO>(driver);

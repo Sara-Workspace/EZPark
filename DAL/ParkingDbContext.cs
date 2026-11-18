@@ -25,10 +25,20 @@ namespace DAL
         public DbSet<SpotAvailability> SpotAvailability { get; set; }
         public DbSet<DynamicPricingRules> DynamicPricingRules { get; set; }
         public DbSet<Payment> Payment { get; set; }
+        public DbSet<SpotChecks> SpotChecks { get; set; }   // בדיקות חניה (לוחיות רישוי)
+        public DbSet<WalletTransaction> WalletTransactions { get; set; } // 📒 דף החשבון של הארנקים
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Users>()
+                 .Property(u => u.Points)
+                 .HasDefaultValue(3000);
+
+            modelBuilder.Entity<Users>()
+                .Property(u => u.PointsResetAt)
+                .HasDefaultValueSql("GETUTCDATE()");
 
             // 1. מניעת כפילות אימיילים בטבלת Users המאוחדת
             modelBuilder.Entity<Users>()
@@ -55,6 +65,36 @@ namespace DAL
                 .WithMany()
                 .HasForeignKey(r => r.ReservationId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            // 5. בדיקות חניה: כל בדיקה שייכת לחניה אחת.
+            //    כותבים במפורש ש-SpotId הוא המפתח הזר, אחרת EF ממציא עמודה נסתרת (ParkingSpotSpotId)
+            modelBuilder.Entity<SpotChecks>()
+                .HasOne(c => c.ParkingSpot)
+                .WithMany()
+                .HasForeignKey(c => c.SpotId)
+                .OnDelete(DeleteBehavior.Cascade);   // מוחקים חניה ← נמחקות גם הבדיקות שלה
+
+            // 6. שעות זמינות: כל שורת זמינות שייכת לחניה אחת.
+            //    אותה בעיה כמו בסעיף 5: בלי השורה הזאת EF ממציא עמודה נסתרת (ParkingSpotSpotId)
+            modelBuilder.Entity<SpotAvailability>()
+                .HasOne(a => a.ParkingSpot)
+                .WithMany()
+                .HasForeignKey(a => a.SpotId)
+                .OnDelete(DeleteBehavior.Cascade);   // מוחקים חניה ← נמחקות גם שעות הזמינות שלה
+
+            // 7. כסף: 2 ספרות אחרי הנקודה (אגורות), עד 99,999,999.99
+            modelBuilder.Entity<Users>()
+                .Property(u => u.Balance)
+                .HasPrecision(10, 2)
+                .HasDefaultValue(0m);
+
+            modelBuilder.Entity<WalletTransaction>()
+                .Property(t => t.Amount)
+                .HasPrecision(10, 2);
+
+            // חיפוש מהיר של טעינה לפי מספר ההזמנה ב-PayPal
+            modelBuilder.Entity<WalletTransaction>()
+                .HasIndex(t => t.PayPalOrderId);
         }
     }
 }

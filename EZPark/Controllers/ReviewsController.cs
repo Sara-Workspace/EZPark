@@ -2,86 +2,78 @@
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Parking.Extensions;                    // ← תיקון 4: בשביל User.GetUserId()
+using Parking.Extensions;                    // בשביל User.GetUserId()
 
 namespace Parking.Controllers
 {
+    // אין כאן בדיקות null: אם משהו לא נמצא, הסרוויס זורק שגיאה וה-GlobalExceptionFilter מחזיר 404
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class ReviewsController : ControllerBase
     {
         private readonly IReviewService _reviewService;
+        private readonly IDriverService _driverService;
 
-        public ReviewsController(IReviewService reviewService)
+        public ReviewsController(IReviewService reviewService, IDriverService driverService)
         {
             _reviewService = reviewService;
+            _driverService = driverService;
+        }
+
+        // מזהה הנהגת לפי האימייל בטוקן (ולא לפי התפקיד), כך שגם בעלת חניה ששוכרת יכולה לדרג
+        private int GetCurrentDriverId()
+        {
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            return _driverService.GetDriverByEmail(email).DriverID;
         }
 
         [AllowAnonymous]
         [HttpGet]
         public ActionResult<List<ReviewDTO>> GetAllReviews()
         {
-            var reviews = _reviewService.GetAllReviews();
-            return Ok(reviews);
+            return Ok(_reviewService.GetAllReviews());
         }
 
         [AllowAnonymous]
         [HttpGet("{id}")]
         public ActionResult<ReviewDTO> GetReviewById(int id)
         {
-            var review = _reviewService.GetReviewById(id);
-            if (review == null)
-            {
-                return NotFound($"Review with ID {id} not found.");
-            }
-            return Ok(review);
+            return Ok(_reviewService.GetReviewById(id));
         }
 
         [AllowAnonymous]
         [HttpGet("spot/{spotId}")]
         public ActionResult<List<ReviewDTO>> GetReviewsBySpotId(int spotId)
         {
-            var reviews = _reviewService.GetReviewsBySpotId(spotId);
-            return Ok(reviews);
+            return Ok(_reviewService.GetReviewsBySpotId(spotId));
         }
 
         [AllowAnonymous]
         [HttpGet("spot/{spotId}/average-rating")]
         public ActionResult<double> GetAverageRatingBySpotId(int spotId)
         {
-            double average = _reviewService.GetAverageRatingBySpotId(spotId);
-            return Ok(average);
+            return Ok(_reviewService.GetAverageRatingBySpotId(spotId));
         }
 
-        [Authorize(Roles = "Driver")]
+        //[Authorize(Roles = "Driver")]
         [HttpPost]
         public ActionResult<ReviewDTO> CreateReview([FromBody] ReviewCreateDTO dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // ← תיקון 4: מזהה הנהג מהטוקן
-            var createdReview = _reviewService.CreateReview(dto, User.GetUserId());
-            if (createdReview == null)
-            {
-                return NotFound("Reservation not found.");
-            }
+            // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
+            // מזהה הנהג מגיע מהטוקן
+            var createdReview = _reviewService.CreateReview(dto, GetCurrentDriverId());
             return CreatedAtAction(nameof(GetReviewById), new { id = createdReview.ReviewID }, createdReview);
         }
 
-        [Authorize(Roles = "Driver")]
+       // [Authorize(Roles = "Driver")]
         [HttpDelete("{id}")]
         public IActionResult DeleteReview(int id)
         {
-            // ← תיקון 4: מוחקים רק אם הביקורת של הנהג המחובר
-            var success = _reviewService.DeleteReview(id, User.GetUserId());
-            if (!success)
-            {
-                return NotFound($"Review with ID {id} not found.");
-            }
+            // מוחקים רק אם הביקורת של הנהג המחובר
+            _reviewService.DeleteReview(id, GetCurrentDriverId());
             return NoContent();
         }
     }

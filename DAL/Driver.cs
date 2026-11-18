@@ -16,6 +16,8 @@ namespace DAL
 
         public decimal CreditBalance { get; set; } // יתרת ארנק דיגיטלי
         public int PaymentMethodID { get; set; } // מזהה אמצעי התשלום השמור
+        // מספר הרישוי של הרכב הנוכחי (רכב אחד, נדרס בכל פעם)
+        public string? LicensePlate { get; set; }
 
         // ניווט לטבלת המשתמש המאוחדת (מכילה שם, אימייל, סיסמה וטלפון)
         public Users User { get; set; } = null!;

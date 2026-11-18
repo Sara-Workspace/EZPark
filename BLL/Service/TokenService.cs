@@ -9,7 +9,8 @@ namespace BLL.Services
 {
     public interface ITokenService
     {
-        AuthResponseDTO CreateToken(int userId, string email, string role);
+        // secondRole: תפקיד נוסף, למשתמש שהוא גם נהג וגם בעל חניה (null = אין)
+        AuthResponseDTO CreateToken(int userId, string email, string role, string? secondRole = null);
     }
 
     public class TokenService : ITokenService
@@ -21,7 +22,7 @@ namespace BLL.Services
             _config = config;
         }
 
-        public AuthResponseDTO CreateToken(int userId, string email, string role)
+        public AuthResponseDTO CreateToken(int userId, string email, string role, string? secondRole = null)
         {
             var jwtKey = _config["Jwt:Key"];
             if (string.IsNullOrWhiteSpace(jwtKey))
@@ -36,6 +37,13 @@ namespace BLL.Services
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Role, role)
             };
+
+            // משתמש שהוא גם נהג וגם בעל חניה: מוסיפים לטוקן גם את התפקיד השני.
+            // כך [Authorize(Roles = "Owner")] וגם [Authorize(Roles = "Driver")] יעבדו לו
+            if (secondRole != null)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, secondRole));
+            }
 
             var minutes = int.Parse(_config["Jwt:ExpiresMinutes"] ?? "60");
             var expires = DateTime.UtcNow.AddMinutes(minutes);

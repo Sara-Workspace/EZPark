@@ -1,67 +1,67 @@
-﻿using BLL.Services;
-using BLL.Interfaces;
+﻿using BLL.Interfaces;
 using DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Parking.Extensions;                    // ← תיקון 4: בשביל User.GetUserId()
+using System.Security.Claims;
 
 namespace Parking.Controllers
 {
+    // אין כאן בדיקות null: אם משהו לא נמצא, הסרוויס זורק שגיאה וה-GlobalExceptionFilter מחזיר 404
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class SpotAvailabilityController : ControllerBase
     {
         private readonly ISpotAvailabilityService _availabilityService;
+        private readonly IOwnerService _ownerService;
 
-        public SpotAvailabilityController(ISpotAvailabilityService availabilityService)
+        public SpotAvailabilityController(ISpotAvailabilityService availabilityService, IOwnerService ownerService)
         {
             _availabilityService = availabilityService;
+            _ownerService = ownerService;
+        }
+
+        // מזהה בעל החניה המחובר - לפי האימייל שבטוקן (כמו ב-ParkingSpotsController).
+        // לא לפי המספר שבטוקן: אצל משתמש שהוא גם נהג, המספר שבטוקן הוא מספר הנהג שלו
+        private int GetCurrentOwnerId()
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value
+                ?? throw new UnauthorizedAccessException("לא נמצא אימייל בטוקן.");
+
+            var owner = _ownerService.GetOwnerByEmail(email)
+                ?? throw new UnauthorizedAccessException("לא נמצא פרופיל בעל חניה למשתמש.");
+
+            return owner.OwnerID;
         }
 
         [AllowAnonymous]
         [HttpGet]
         public ActionResult<List<SpotAvailabilityDTO>> GetAllSpotAvailabilities()
         {
-            var list = _availabilityService.GetAllSpotAvailabilities();
-            return Ok(list);
+            return Ok(_availabilityService.GetAllSpotAvailabilities());
         }
 
         [AllowAnonymous]
         [HttpGet("{id}")]
         public ActionResult<SpotAvailabilityDTO> GetSpotAvailabilityById(int id)
         {
-            var item = _availabilityService.GetSpotAvailabilityById(id);
-            if (item == null)
-            {
-                return NotFound($"Availability record with ID {id} not found.");
-            }
-            return Ok(item);
+            return Ok(_availabilityService.GetSpotAvailabilityById(id));
         }
 
         [AllowAnonymous]
         [HttpGet("spot/{spotId}")]
         public ActionResult<List<SpotAvailabilityDTO>> GetAvailabilityBySpotId(int spotId)
         {
-            var list = _availabilityService.GetAvailabilityBySpotId(spotId);
-            return Ok(list);
+            return Ok(_availabilityService.GetAvailabilityBySpotId(spotId));
         }
 
         [Authorize(Roles = "Owner")]
         [HttpPost]
         public ActionResult<SpotAvailabilityDTO> CreateSpotAvailability([FromBody] SpotAvailabilityCreateDTO dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // ← תיקון 4: מזהה בעל החניה מהטוקן
-            var created = _availabilityService.CreateSpotAvailability(dto, User.GetUserId());
-            if (created == null)
-            {
-                return NotFound($"Parking spot with ID {dto.SpotID} not found.");
-            }
+            // בדיקת ModelState לא צריך: [ApiController] מחזיר 400 אוטומטית אם ה-DTO לא תקין
+            // מזהה בעל החניה מגיע מהאימייל שבטוקן
+            var created = _availabilityService.CreateSpotAvailability(dto, GetCurrentOwnerId());
             return CreatedAtAction(nameof(GetSpotAvailabilityById), new { id = created.AvailabilityID }, created);
         }
 
@@ -69,12 +69,8 @@ namespace Parking.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteSpotAvailability(int id)
         {
-            // ← תיקון 4: מוחקים רק מחניה של בעל החניה המחובר
-            var success = _availabilityService.DeleteSpotAvailability(id, User.GetUserId());
-            if (!success)
-            {
-                return NotFound($"Availability record with ID {id} not found.");
-            }
+            // מוחקים רק מחניה של בעל החניה המחובר
+            _availabilityService.DeleteSpotAvailability(id, GetCurrentOwnerId());
             return NoContent();
         }
     }

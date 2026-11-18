@@ -14,5 +14,6 @@ namespace DAL.Repositories
         Owners? GetOwnerByEmail(string email);
         Owners? GetOwnerWithSpots(int id);
         Task<Owners?> GetByEmailAsync(string email);
+        bool EmailExists(string email);   // האם המייל כבר רשום במערכת (אצל בעל חניה או נהג)
     }
 }

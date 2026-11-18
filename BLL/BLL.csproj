@@ -15,6 +15,8 @@
 	<ItemGroup>
 		<!-- רשימת ספריות חיצוניות -->
 		<PackageReference Include="AutoMapper" Version="14.0.0" />
+		<PackageReference Include="Google.GenAI" Version="2.1.0" />
+		<PackageReference Include="Microsoft.Extensions.AI" Version="10.11.0" />
 		<!-- ספריית ההמרות בין טבלה ל-DTO -->
 	</ItemGroup>
 	<!-- סוף רשימת הספריות -->

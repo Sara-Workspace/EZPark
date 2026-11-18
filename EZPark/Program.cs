@@ -1,6 +1,7 @@
 ﻿using BLL;
 using BLL.Services;
 using BLL.Interfaces;
+using BLL.Geocoding;
 using DAL;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -10,17 +11,29 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Parking.Filters;
+using BLL.Service;
+using Microsoft.Extensions.AI;
+using BLL.Agent;
+using BLL.PlateRecognition;
+using BLL.SpotCheck;
+using BLL.Payments;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. הגדרת נתיב התמונות
+// 1.  הגדרת נתיב התמונות ויצירת תקיה אם לא קיימת
 var imagesFolder = Path.GetFullPath(Path.Combine(
     builder.Environment.ContentRootPath,
     builder.Configuration["ImagesFolder"]!));
 Directory.CreateDirectory(imagesFolder);
 
-// 2. הוספת קונטרולרים
-builder.Services.AddControllers();
+// 2. הוספת קונטרולרים + רישום השומר המרכזי לשגיאות
+// כל שגיאה שלא נתפסה באחד הקונטרולרים תגיע ל-GlobalExceptionFilter,
+// והוא יחזיר תשובה מסודרת (404 / 409 / 400 / 500) במקום קריסה
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});
 
 // 3. קריאת מחרוזת חיבור למסד הנתונים
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -43,6 +56,8 @@ builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IReviewsRepository, ReviewsRepository>();
 builder.Services.AddScoped<ISpotAvailabilityRepository, SpotAvailabilityRepository>();
 builder.Services.AddScoped<IDynamicPricingRulesRepository, DynamicPricingRulesRepository>();
+builder.Services.AddScoped<ISpotChecksRepository, SpotChecksRepository>();
+builder.Services.AddScoped<IWalletRepository, WalletRepository>();   // 👛 ארנקים
 
 // 6. רישום ה-Services ל-DI דרך הממשקים (Interfaces)
 builder.Services.AddScoped<IDriverService, DriverService>();
@@ -52,9 +67,68 @@ builder.Services.AddScoped<IReservationsService, ReservationsService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ISpotAvailabilityService, SpotAvailabilityService>();
+builder.Services.AddScoped<ISpotOpenHoursService, SpotOpenHoursService>(); // "האם החניה פתוחה עכשיו?" לפי שעות הזמינות
 builder.Services.AddScoped<IDynamicPricingService, DynamicPricingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
+
+builder.Services.AddScoped<DynamicPricingService>();
+builder.Services.AddScoped<SpotSearchService>();
+builder.Services.AddSingleton<SpotHoldRegistry>();
+builder.Services.AddScoped<SpotHoldService>();
+
+// 6א. API חיצוני: המרת כתובת למיקום (Geocoding) של OpenStreetMap
+//     AddHttpClient רושם את השירות ב-DI ומזריק לו HttpClient מוכן (לא יוצרים new HttpClient בעצמנו)
+builder.Services.AddHttpClient<IGeocodingService, GeocodingService>(client =>
+{
+    client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");   // הכתובת הראשית של ה-API
+    client.Timeout = TimeSpan.FromSeconds(10);                              // לא מחכים יותר מ-10 שניות
+    // חובה לפי הכללים של OpenStreetMap: להציג מי אנחנו. בלי זה הבקשה נחסמת
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("EZPark-StudentProject/1.0 (+https://github.com/Sara-Workspace/EZPark)");
+});
+
+// 6ב. AI Agent: חיבור ל-Gemini של גוגל
+//     המפתח נקרא ממשתנה הסביבה Gemini__ApiKey (שני קווים תחתונים הופכים לנקודתיים)
+var geminiApiKey = builder.Configuration["Gemini:ApiKey"];
+if (string.IsNullOrWhiteSpace(geminiApiKey))
+    throw new InvalidOperationException("Gemini:ApiKey is missing. Set the environment variable Gemini__ApiKey.");
+
+//     משתמשים בחבילה הרשמית של גוגל (Google.GenAI), ולא בחבילה של OpenAI כמו במדריך:
+//     מודלי Gemini 3 ומעלה דורשים "חתימת מחשבה" (thought signature) בכל קריאה לכלי,
+//     והחבילה של OpenAI זורקת אותה בדרך. החבילה של גוגל שומרת עליה.
+//     שאר הקוד לא משתנה, כי הוא מכיר רק את IChatClient.
+//     המודל: Flash-Lite = הכי קל וזול, כדי שהמכסה החינמית לא תיגמר מהר
+IChatClient geminiChatClient = new Google.GenAI.Client(apiKey: geminiApiKey)
+    .AsIChatClient("gemini-3.5-flash-lite");
+
+//     רישום ב-DI. UseFunctionInvocation = הרכיב שמריץ את הכלים שהמודל מבקש (ה"מזכירה")
+builder.Services.AddChatClient(geminiChatClient)
+    .UseFunctionInvocation();
+
+//     ה"מוח" של הצ'אט והכלים שלו (BLL/Agent)
+builder.Services.AddScoped<ParkingTools>();
+builder.Services.AddScoped<IAgentService, AgentService>();
+
+// 6ג. זיהוי לוחיות רישוי מתמונה (BLL/PlateRecognition)
+//     משתמש באותו Gemini שרשמנו למעלה (IChatClient), רק בלי כלים: שולחים תמונה ומקבלים מספר
+builder.Services.AddScoped<IPlateRecognitionService, PlateRecognitionService>();
+
+// 6ד. בדיקת חניה תפוסה + מצלמה מדומה (BLL/SpotCheck)
+//     תמונות המצלמה נשמרות בתיקייה נפרדת, ליד תיקיית Images.
+//     בכוונה לא בתוך Images: התמונות שם פתוחות לכולם בכתובת /images, ותמונות של לוחיות רישוי הן מידע פרטי
+var camerasFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "../CameraSnapshots"));
+builder.Services.AddSingleton<ICameraService>(new CameraService(camerasFolder));
+builder.Services.AddScoped<ISpotCheckService, SpotCheckService>();
+
+// 6ה. 👛 ארנקים + תשלום ב-PayPal (סביבת בדיקות - Sandbox)
+//     המפתחות במשתני הסביבה PayPal__ClientId ו-PayPal__Secret (לא בגיט!).
+//     בלי מפתחות השרת עדיין עולה, ורק טעינת ארנק מחזירה הודעה ברורה שחסרה הגדרה
+builder.Services.AddHttpClient<IPayPalService, PayPalService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["PayPal:BaseUrl"] ?? "https://api-m.sandbox.paypal.com/");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+builder.Services.AddScoped<IWalletService, WalletService>();
 
 // 7. רישום שירותי אבטחה ב-DI
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();
@@ -121,7 +195,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // הכתובת של Vite
+        policy.WithOrigins("http://localhost:5173",
+    "http://ezpark-app.tryasp.net",
+    "https://ezpark-app.tryasp.net") // הכתובת של Vite
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -129,18 +205,19 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
+
+// 1. קודם כל הפניה ל-HTTPS (לפני CORS ולפני קבצים סטטיים)
+app.UseHttpsRedirection();
 
 app.UseRouting();
 
 // חייב להופיע לפני UseAuthentication ו-UseAuthorization
 app.UseCors("AllowReactApp");
-
-app.UseHttpsRedirection();
 
 // 11. הגשת תמונות סטטיות
 app.UseStaticFiles(new StaticFileOptions
