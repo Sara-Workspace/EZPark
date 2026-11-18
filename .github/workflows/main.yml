@@ -42,4 +42,10 @@ jobs:
           }
           $sourcePath = (Resolve-Path "./publish").Path
           $computerName = "https://$($env:SERVER):8172/msdeploy.axd?site=$($env:SITE)"
-          & $msdeploy -verb:sync -source:contentPath="$sourcePath" -dest:contentPath="$($env:SITE)",computerName="$computerName",userName="$($env:USER)",password="$($env:PASS)",authtype="Basic" -allowUntrusted
+          $deployArgs = @(
+            "-verb:sync",
+            "-source:contentPath=$sourcePath",
+            "-dest:contentPath=$($env:SITE),computerName=$computerName,userName=$($env:USER),password=$($env:PASS),authtype=Basic",
+            "-allowUntrusted"
+          )
+          & $msdeploy $deployArgs
