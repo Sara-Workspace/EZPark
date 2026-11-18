@@ -29,10 +29,17 @@ jobs:
           dotnet publish $proj.FullName --configuration Release --no-build --output ./publish
 
       - name: Deploy to MonsterASP
-        uses: SamKirkland/web-deploy@v1
-        with:
-          target-url: ${{ secrets.SERVER_COMPUTER_NAME }}
-          website-name: ${{ secrets.WEBSITE_NAME }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: ./publish
+        shell: pwsh
+        env:
+          SERVER: ${{ secrets.SERVER_COMPUTER_NAME }}
+          SITE: ${{ secrets.WEBSITE_NAME }}
+          USER: ${{ secrets.SERVER_USERNAME }}
+          PASS: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          $msdeploy = "${env:ProgramFiles(x86)}\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          if (-not (Test-Path $msdeploy)) {
+            $msdeploy = "$env:ProgramFiles\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+          }
+          $sourcePath = (Resolve-Path "./publish").Path
+          $computerName = "https://$($env:SERVER):8172/msdeploy.axd?site=$($env:SITE)"
+          & $msdeploy -verb:sync -source:contentPath="$sourcePath" -dest:contentPath="$($env:SITE)",computerName="$computerName",userName="$($env:USER)",password="$($env:PASS)",authtype="Basic" -allowUntrusted
