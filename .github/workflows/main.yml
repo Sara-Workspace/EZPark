@@ -2,7 +2,7 @@ name: Build and Deploy EZPark API
 
 on:
   push:
-    branches: [ part-four]
+    branches: [ part-four, main ]
   workflow_dispatch:
 
 jobs:
@@ -19,13 +19,13 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore EZPark/EZPark.csproj
+        run: dotnet restore EZPark.csproj
 
       - name: Build
-        run: dotnet build EZPark/EZPark.csproj --configuration Release --no-restore
+        run: dotnet build EZPark.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish EZPark/EZPark.csproj --configuration Release --no-build --output ./publish
+        run: dotnet publish EZPark.csproj --configuration Release --no-build --output ./publish
 
       - name: Deploy to MonsterASP
         uses: SamKirkland/web-deploy@v1
