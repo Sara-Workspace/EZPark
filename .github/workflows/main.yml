@@ -18,14 +18,15 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore EZPark.csproj
-
-      - name: Build
-        run: dotnet build EZPark.csproj --configuration Release --no-restore
-
-      - name: Publish
-        run: dotnet publish EZPark.csproj --configuration Release --no-build --output ./publish
+      - name: Find API project and Publish
+        shell: pwsh
+        run: |
+          $proj = Get-ChildItem -Recurse -Filter *.csproj | Where-Object { $_.Name -notmatch 'DAL|BLL|DTO|Model|Test' } | Select-Object -First 1
+          if (-not $proj) { throw "No Web API .csproj file found!" }
+          Write-Host "Building project: $($proj.FullName)"
+          dotnet restore $proj.FullName
+          dotnet build $proj.FullName --configuration Release --no-restore
+          dotnet publish $proj.FullName --configuration Release --no-build --output ./publish
 
       - name: Deploy to MonsterASP
         uses: SamKirkland/web-deploy@v1
