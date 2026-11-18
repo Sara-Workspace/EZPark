@@ -20,7 +20,7 @@ using BLL.SpotCheck;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. הגדרת נתיב התמונות
+// 1.  הגדרת נתיב התמונות ויצירת תקיה אם לא קיימת
 var imagesFolder = Path.GetFullPath(Path.Combine(
     builder.Environment.ContentRootPath,
     builder.Configuration["ImagesFolder"]!));
@@ -183,7 +183,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // הכתובת של Vite
+        policy.WithOrigins("http://localhost:5173",
+            "https://ezpark-app.tryasp.net") // הכתובת של Vite
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -197,12 +198,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// 1. קודם כל הפניה ל-HTTPS (לפני CORS ולפני קבצים סטטיים)
+app.UseHttpsRedirection();
+
 app.UseRouting();
 
 // חייב להופיע לפני UseAuthentication ו-UseAuthorization
 app.UseCors("AllowReactApp");
-
-app.UseHttpsRedirection();
 
 // 11. הגשת תמונות סטטיות
 app.UseStaticFiles(new StaticFileOptions
