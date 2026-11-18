@@ -1,4 +1,5 @@
 ﻿using BLL.Exceptions;
+using BLL.Interfaces;
 using BLL.PlateRecognition;
 using BLL.Services;
 using DAL;
@@ -13,7 +14,7 @@ namespace BLL.SpotCheck
     // בכל השלוש, ההחלטה עצמה זהה (CheckAsync למטה)
     public class SpotCheckService : ISpotCheckService
     {
-        public const int FinePoints = 200; // גובה הקנס בנקודות. רוצים לשנות? משנים רק כאן
+        public const int FinePoints = 200; // גובה הקנס בשקלים (₪). רוצים לשנות? משנים רק כאן
 
         // לא נותנים לאותו רכב קנס פעמיים על אותה חניה תוך 24 שעות
         private static readonly TimeSpan NoDoubleFineWindow = TimeSpan.FromHours(24);
@@ -26,6 +27,7 @@ namespace BLL.SpotCheck
         private readonly IOwnersRepository _ownerRepo;
         private readonly ISpotChecksRepository _checksRepo;
         private readonly SpotHoldRegistry _holdRegistry;              // השמירות ל-5 דקות (של שרה)
+        private readonly IWalletService _wallet;                      // 👛 הקנס יורד מהארנק
 
         public SpotCheckService(
             IPlateRecognitionService plateRecognition,
@@ -35,7 +37,8 @@ namespace BLL.SpotCheck
             IDriverRepository driverRepo,
             IOwnersRepository ownerRepo,
             ISpotChecksRepository checksRepo,
-            SpotHoldRegistry holdRegistry)
+            SpotHoldRegistry holdRegistry,
+            IWalletService wallet)
         {
             _plateRecognition = plateRecognition;
             _camera = camera;
@@ -45,6 +48,7 @@ namespace BLL.SpotCheck
             _ownerRepo = ownerRepo;
             _checksRepo = checksRepo;
             _holdRegistry = holdRegistry;
+            _wallet = wallet;
         }
 
         // ===== מנהל: העלאת תמונת מצלמה =====
@@ -154,13 +158,12 @@ namespace BLL.SpotCheck
                     }
                     else
                     {
-                        // הקנס יורד מהנקודות של החודש הבא (ב-ReservationsService, בחידוש החודשי)
-                        plateOwner.User.PendingFinePoints += FinePoints;
-                        _driverRepo.UpdateDriver(plateOwner);
+                        // הקנס יורד מהארנק של הנהג מיד (גם אם הוא נכנס למינוס), ועובר לאתר
+                        _wallet.ChargeFine(plateOwner.User, FinePoints, spot.Address);
 
                         check.FinedUserId = plateOwner.UserId;
                         check.FinePoints = FinePoints;
-                        message = $"הרכב שייך לנהג אחר שחנה בלי להזמין. הוא יקבל קנס של {FinePoints} נקודות מהחודש הבא.";
+                        message = $"הרכב שייך לנהג אחר שחנה בלי להזמין. הוא חויב בקנס של {FinePoints} ₪.";
                     }
                 }
                 else

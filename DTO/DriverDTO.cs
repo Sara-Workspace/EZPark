@@ -18,6 +18,7 @@ namespace DTO
         public DateTime CreatedAt { get; set; }
         public bool IsAdmin { get; set; }
         public int Points { get; set; }
+        public decimal Balance { get; set; } // 👛 יתרת הארנק בשקלים
         public string? LicensePlate { get; set; }
     }
 }

@@ -39,9 +39,10 @@ namespace BLL.Service
                 throw new BusinessRuleException("יש להזין מספר רישוי רכב לפני תפיסת חניה.");
             }
 
-            if (driver.User != null && driver.User.Points <= 0)
+            // אין כסף בארנק (או שהוא במינוס) - לא שומרים חניה
+            if (driver.User != null && driver.User.Balance <= 0)
             {
-                throw new BusinessRuleException("נגמרו לך הנקודות למימוש לחודש זה.");
+                throw new BusinessRuleException("אין מספיק כסף בארנק. טענו את הארנק כדי לחנות.");
             }
 
             var spot = _spotRepository.GetParkingSpotById(spotId);

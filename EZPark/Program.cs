@@ -17,6 +17,7 @@ using Microsoft.Extensions.AI;
 using BLL.Agent;
 using BLL.PlateRecognition;
 using BLL.SpotCheck;
+using BLL.Payments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,7 @@ builder.Services.AddScoped<IReviewsRepository, ReviewsRepository>();
 builder.Services.AddScoped<ISpotAvailabilityRepository, SpotAvailabilityRepository>();
 builder.Services.AddScoped<IDynamicPricingRulesRepository, DynamicPricingRulesRepository>();
 builder.Services.AddScoped<ISpotChecksRepository, SpotChecksRepository>();
+builder.Services.AddScoped<IWalletRepository, WalletRepository>();   // 👛 ארנקים
 
 // 6. רישום ה-Services ל-DI דרך הממשקים (Interfaces)
 builder.Services.AddScoped<IDriverService, DriverService>();
@@ -117,6 +119,16 @@ builder.Services.AddScoped<IPlateRecognitionService, PlateRecognitionService>();
 var camerasFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "../CameraSnapshots"));
 builder.Services.AddSingleton<ICameraService>(new CameraService(camerasFolder));
 builder.Services.AddScoped<ISpotCheckService, SpotCheckService>();
+
+// 6ה. 👛 ארנקים + תשלום ב-PayPal (סביבת בדיקות - Sandbox)
+//     המפתחות במשתני הסביבה PayPal__ClientId ו-PayPal__Secret (לא בגיט!).
+//     בלי מפתחות השרת עדיין עולה, ורק טעינת ארנק מחזירה הודעה ברורה שחסרה הגדרה
+builder.Services.AddHttpClient<IPayPalService, PayPalService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["PayPal:BaseUrl"] ?? "https://api-m.sandbox.paypal.com/");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+builder.Services.AddScoped<IWalletService, WalletService>();
 
 // 7. רישום שירותי אבטחה ב-DI
 builder.Services.AddScoped<IPasswordHasher<Owners>, PasswordHasher<Owners>>();

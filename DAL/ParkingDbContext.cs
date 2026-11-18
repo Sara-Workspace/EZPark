@@ -26,6 +26,7 @@ namespace DAL
         public DbSet<DynamicPricingRules> DynamicPricingRules { get; set; }
         public DbSet<Payment> Payment { get; set; }
         public DbSet<SpotChecks> SpotChecks { get; set; }   // בדיקות חניה (לוחיות רישוי)
+        public DbSet<WalletTransaction> WalletTransactions { get; set; } // 📒 דף החשבון של הארנקים
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,6 +81,20 @@ namespace DAL
                 .WithMany()
                 .HasForeignKey(a => a.SpotId)
                 .OnDelete(DeleteBehavior.Cascade);   // מוחקים חניה ← נמחקות גם שעות הזמינות שלה
+
+            // 7. כסף: 2 ספרות אחרי הנקודה (אגורות), עד 99,999,999.99
+            modelBuilder.Entity<Users>()
+                .Property(u => u.Balance)
+                .HasPrecision(10, 2)
+                .HasDefaultValue(0m);
+
+            modelBuilder.Entity<WalletTransaction>()
+                .Property(t => t.Amount)
+                .HasPrecision(10, 2);
+
+            // חיפוש מהיר של טעינה לפי מספר ההזמנה ב-PayPal
+            modelBuilder.Entity<WalletTransaction>()
+                .HasIndex(t => t.PayPalOrderId);
         }
     }
 }
