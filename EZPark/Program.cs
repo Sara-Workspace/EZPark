@@ -196,7 +196,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp", policy =>
     {
         policy.WithOrigins("http://localhost:5173",
-            "https://ezpark-app.tryasp.net") // הכתובת של Vite
+    "http://ezpark-app.tryasp.net",
+    "https://ezpark-app.tryasp.net") // הכתובת של Vite
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
